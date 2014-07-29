@@ -14,6 +14,8 @@ defined('ABSPATH') or die("No script kiddies please!");
 function signature_register_js() {	// support for signup form, which appears on two pages and in a popup
     wp_register_script('signature', plugins_url( 'js/signature.js' , __FILE__ ), 'jquery');
     wp_enqueue_script('signature');
+    wp_register_style('fs-signature-styles', plugins_url( 'css/style.css', __FILE__ ) );
+    wp_enqueue_style('fs-signature-styles');
 }
 add_action('wp_enqueue_scripts', 'signature_register_js');
 /*
@@ -781,6 +783,207 @@ function generateRandomString($length = 10) {
     }
     return $randomString;
 }
+/*
+ * Shortcode for confirming or reconfirming signature
+ */
+add_action('init', 'register_signature_confirm_script' );
+add_action( 'wp_footer', 'enqueue_signature_confirm_script' );
+function register_signature_confirm_script() {
+	wp_register_script('confirm',  plugins_url( 'js/confirm.js', __FILE__ ), 'jquery');
+}
+function enqueue_signature_confirm_script() {
+    global $add_signature_confirm_script;
+    if( ! $add_signature_confirm_script ) return;
+    wp_enqueue_script('confirm');
+}
+function fs_signature_confirm () {
+    global $add_signature_confirm_script;
+    $add_signature_confirm_script = true;
+    
+    $secret = $_GET['secret'];
+    global $wpdb;
+    $found = false;
+    if($secret!=="") {
+        $query = $wpdb->prepare ( "SELECT * FROM " . $wpdb->postmeta . " WHERE meta_value='%s' AND meta_key='fs_signature_secret'", $secret );
+        $row = $wpdb->get_row( $query );
+        if( $row ) {
+            $post_id = $row->post_id;
+            if( $post_id ) {
+                $sig = get_post ( $post_id, 'OBJECT' );
+                if($sig->post_type === 'fs_signature' && ( $sig->post_status==="draft" || $sig->post_status==="private" ) ) {
+                    $custom = get_post_custom( $post_id );
+                    $update = $sig->post_status === "private";
+                    if( $sig->post_title !== "" && $custom['fs_signature_country'][0] ) {
+                        $found = true;
+                        $sig->post_status = "private";
+                        if( ! $update ) update_post_meta( $post_id, 'fs_signature_registered', date('Y-m-d') );
+                        wp_update_post ( $sig );
+                    }
+                }
+            }
+        }
+    }
+    ob_start();
+    if( ! $found ) { 
+        if( $secret ) { ?>
+            <P>Sorry, the secret code doesn't match our records and we can't confirm your email.</P>
+            <P>The link in our original email to you only works once.  If you would like to change your email preferences, enter your email address here, and we will send you a fresh email, with a link that will enable you to update your details.</P>
+        <?php } else { ?>
+            <h2>Welcome back.</h2>
+            To edit your details on Freestyle Cyclists' campaign to reform helmet law, enter your email address below, and we will send you
+            a new email link with a secret code that works just once.
+        <?php } ?>
+
+        <form name="confirm">
+            <table border="0">
+                <tbody>
+                    <tr><td class="leftcol">Your email:</td><td class="rightcol"><input name="email" /></td></tr>
+                    <tr><td colspan="2"><button type="button" id="confirmButton">Get a new email</button></td></tr>
+                    <tr><td colspan="2"><div id="ajax-loading" class="farleft"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif"></div></td></tr>
+                    <tr><td colspan="2"><div id="returnMessage"></div></td></tr>
+                </tbody>
+            </table>
+            <input name="action" value="reconfirmSignature" type="hidden">
+            <input name="secretkey" value="<?=$secret;?>" type="hidden">
+            <?php wp_nonce_field( "fs_reconfirm_sig", "fs_nonce" );?>
+        </form>
+        <P>Otherwise, send an email to <a href='mailto:info@freestylecyclists.org'>info@freestylecyclists.org</a> so we can help you sort it out.</P>
+        <P><a href="<?=get_site_url();?>/sign-the-petition-to-reform-helmet-law/">Click here to add your name to the petition to reform bicycle helmet laws</a></p>
+        <?php
+    } else { ?>
+        <h2>Thanks for confirming your email address with Freestyle Cyclists</h2>
+        You can update any details below. If you would like to be kept informed, upgrade your notification option below:
+        <form name="confirm">
+            <table border="0">
+                <tbody>
+                <tr><td class="leftcol">name:</td><td class="rightcol"><?=$sig->post_title;?></td></tr>
+                <tr valign="top"><td class="leftcol"><input name="fs_signature_public" class="inputc" value="y" <?=($custom['fs_signature_public'][0] === "y" ? "checked='checked'" : "");?> id="public" type="checkbox"></td><td>Show my name on this website</td></tr>
+                <tr valign="top"><td class="leftcol">email:</td><td class="rightcol"><?=$custom['fs_signature_email'][0];?></td></tr>
+                <tr valign="top"><td class="leftcol">Email me:</td><td>
+                        <input type="radio" value="" name="fs_signature_newsletter" <?=($custom['fs_signature_newsletter'][0] === "" ? "checked" : "")?>>Never<br/>
+                        <input type="radio" value="y" name="fs_signature_newsletter" <?=($custom['fs_signature_newsletter'][0] === "y" ? "checked" : "")?>>Occasionally: When something important is happening<br/>
+                        <input type="radio" value="m" name="fs_signature_newsletter" <?=($custom['fs_signature_newsletter'][0]==="m" ? "checked" : "")?>>More often: Keep me updated</td></tr>
+
+                <tr><td class="leftcol">Country:</td><td><select id="country" class="inputc" name="fs_signature_country" style="width: 200px;">
+                <option value="">Please select</option>
+                <?php
+                $fs_country = fs_country();
+                foreach( $fs_country as $ab => $title ) { ?>
+                    <option value="<?=$ab;?>" <?=($ab===$custom['fs_signature_country'][0] ? "selected" : "")?>><?php echo $title;?></option>
+                <?php } ?>
+                </select></td></tr>
+
+                <tr><td class="state leftcol <?=($custom['fs_signature_country'][0]==="AU" ? "" : "removed")?>">State:</td><td class="rightcol state <?=($custom['fs_signature_country'][0]==="AU" ? "" : "removed")?>">
+                        <select name="fs_signature_state" class="inputc">
+                <?php
+                $fs_states = fs_states();
+                foreach( $fs_states as $ab => $title ) { ?>
+                    <option value="<?=$ab;?>" <?=($custom['fs_signature_state'][0] === $ab ? "selected" : "")?>><?php echo $title;?></option>
+                <?php } ?>
+                </select></td></tr>
+
+                <tr><td class="leftcol">Comment:</td><td class="rightcol"><textarea id="message" name="excerpt" class="inputc"><?=$sig->post_excerpt?></textarea><br><font size="-2">Comments are subject to moderation</font></td></tr>
+                <tr><td colspan="2"><button type="button" id="confirmButton">Confirm</button></td></tr>
+                <tr><td colspan="2"><div id="ajax-loading" class="farleft"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif"></div></td></tr>
+                <tr><td colspan="2"><div id="returnMessage"></div></td></tr>
+            </tbody></table>
+            <input name="action" value="confirmSignature" type="hidden">
+            <input name="id" value="<?=$sig->ID?>" type="hidden">
+            <input name="secretkey" value="<?=$secret;?>" type="hidden">
+            <?php wp_nonce_field( "fs_confirm_sig_" . $sig->ID, "fs_nonce");?>
+        </form>
+    <?php } ?>
+    <P><a href="<?=get_site_url();?>/signatures">See who has signed</a></p>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('confirm', 'fs_signature_confirm' );
+/*
+ * Shortcode for displaying signatures, paginated
+ */
+add_action('init', 'register_signature_signatures_script');
+add_action('wp_footer', 'enqueue_signature_signatures_script');
+function register_signature_signatures_script() {
+    wp_register_script( 'angular', "//ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular.min.js", 'jquery' );
+    wp_register_script( 'angular-animate', "//ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular-animate.min.js", array( 'angular', 'jquery' ) );
+    wp_register_script('signatures',  plugins_url( 'js/signatures.js' , __FILE__ ), array('jquery', 'angular') );
+}
+function enqueue_signature_signatures_script() {
+	global $add_signature_signatures_script;
+
+	if ( ! $add_signature_signatures_script )
+		return;
+
+        wp_enqueue_script('angular');
+        wp_enqueue_script('angular-animate');
+	wp_enqueue_script('signatures');
+}
+function fs_signature_signatures (  ) {
+    global $add_signature_signatures_script;
+    $add_signature_signatures_script = true;
+    
+    $rows_per_page = 15;
+    $sigs = get_sigs( 0, $rows_per_page ); // first lot of sigs are loaded with the page
+    ob_start();
+    ?>
+    <div class="row" ng-app="signaturesApp" ng-controller="signaturesCtrl">
+        <script type="text/javascript">
+            _sigs = <?=json_encode($sigs)?>;
+            <?php
+            global $wpdb;
+            $query = $wpdb->prepare('select count(*) from ' . $wpdb->posts . ' where post_type="fs_signature" and post_status="private"', '' );
+            $pages = $wpdb->get_col( $query );
+            $pages = floor ( ($pages[0] + 0.9999) / $rows_per_page ) + 1;
+            if(!$pages) $pages = 1;
+            $data = array('pages'=>$pages);
+            $data['rows_per_page'] = $rows_per_page;
+            ?>
+            _data = <?=json_encode($data)?>;
+        </script>
+        <table id="signatures" border="0" width="90%">
+            <tbody>
+                <tr><th width="120">Name</th><th width="100">Location</th><th>Date</th>
+                <?php if(current_user_can('moderate_comments')) { ?>
+                    <th>Admin</th>
+                <?php } ?>
+                <th>Comment</th></tr>
+                <tr ng-repeat="sig in sigs">
+                    <td>{{sig.name}}</td>
+                    <td>{{sig.location}}</td>
+                    <td>{{sig.date}}</td>
+                    <?php if(current_user_can('moderate_comments')) { ?>
+                    <td><a ng-hide="sig.moderate==='y' || sig.comment===''" ng-click="moderate(sig)" href="#">Approve</a><span ng-hide="sig.moderate==='y' || sig.comment===''"> | </span>
+                        <a ng-hide="sig.comment===''" href="<?=get_site_url();?>/wp-admin/post.php?post={{sig.id}}&action=edit">Edit</a></td>
+                    <?php } ?>
+                    <td>{{sig.comment}}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div id="ajax-loading" ng-class="{'farleft':!showLoading}"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif"></div>
+
+        <div>
+            <a href="<?=get_site_url();?>/sign-the-petition-to-reform-helmet-law/">Click here to sign this petition</a>
+        </div>
+        <?php
+        // pagination adapted from http://sgwordpress.com/teaches/how-to-add-wordpress-pagination-without-a-plugin/                    
+        ?>
+        <div ng-hide="data.pages===1" class="pagination"><span>Page {{paged}} of {{data.pages}}</span>
+            <a ng-show="paged>2 && paged > range+1 && showitems<data.pages" ng-click="gotoPage(1)">&laquo; First</a>
+            <a ng-show="paged>1 && showitems<data.pages" ng-click='gotoPage(paged-1)'>&lsaquo; Previous</a>
+
+            <span ng-show='data.pages!==1' ng-repeat='i in pagearray'>
+                <span ng-show='paged===i' class="current">{{i}}</span>
+                <a ng-hide="paged===i" ng-click="gotoPage(i)" class="inactive">{{i}}</a>
+            </span>
+
+            <a ng-show='paged<data.pages && showitems<data.pages' onclick='gotoPage(paged+1)'>Next &rsaquo;</a>
+            <a ng-show='paged<data.pages-1 && paged+range-1<data.pages && showitems < data.pages' ng-click='gotoPage(data.pages)'>Last &raquo;</a>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('signatures', 'fs_signature_signatures' );
 /* 
  * Shortcode for signature submission form
  */
@@ -831,7 +1034,7 @@ function fs_page_sign ( $atts ) {
     </form>
 <?php return ob_get_clean();
 }
-add_shortcode(signature, fs_page_sign );
+add_shortcode('signature', fs_page_sign );
 
 /*
  * change the label for title (for this custom post) from Title to Name
@@ -849,3 +1052,22 @@ function fs_signature_add_admin_styles() {
     wp_enqueue_style( 'admin-style', plugins_url( 'css/admin-style.css' , __FILE__ ) );
 }
 add_action('admin_init', 'fs_signature_add_admin_styles' );
+/*
+ * set cookies for referrer and campaign
+ */
+add_action( 'wp_head', 'fs_signature_head_cookies' );
+function fs_signature_head_cookies() {
+    if(isset($_COOKIE['referrer'])) {
+        $referrer = $_COOKIE['referrer'];
+    } else {
+        $referrer = $_SERVER['HTTP_REFERER'];
+        setcookie('referrer', $referrer, 0, '/' );
+    }
+
+    if( isset($_GET['campaign']) ) {
+        $campaign = $_GET['campaign'];
+        setcookie('campaign', $campaign, 0, '/');
+    } else if(isset($_COOKIE['campaign'])) {
+        $campaign = $_COOKIE['campaign'];
+    }
+}
