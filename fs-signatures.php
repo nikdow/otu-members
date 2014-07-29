@@ -38,10 +38,13 @@ function fs_reconfirmSignature() {
 
     global $wpdb;
     $query = $wpdb->prepare( // find the custom post for this sig
-        "SELECT p.ID FROM " . $wpdb->posts . " p LEFT JOIN " . $wpdb->postmeta . " m ON m.post_id=p.ID WHERE m.meta_key='fs_signature_email' AND m.meta_value=%s",
+        "SELECT p.ID FROM " . $wpdb->posts . " p LEFT JOIN " . $wpdb->postmeta . " m ON m.post_id=p.ID "
+            . "WHERE m.meta_key='fs_signature_email' AND m.meta_value=%s AND (p.post_status='private' OR p.post_status='draft')",
             $email );
+    
     $id = $wpdb->get_col( $query );
     $post = get_post( $id[0], "OBJECT" );
+    
     if( ! $post || ! ( $post->post_status === "private" || $post->post_status === "draft" ) ) {
         echo json_encode ( array( 'error'=>'We couldn\'t find that email address. We would hate to lose contact with you, so please <a href="mailto:info@freestylecyclists.org">email us</a> so we can help sort it out.' ) );
         die;
@@ -139,24 +142,27 @@ function fs_newSignature() {
     }
     global $wpdb;
     // check to see this email isn't already on the petition
-    $query = $wpdb->prepare('SELECT p.post_status as `status` FROM ' . $wpdb->postmeta . ' m LEFT JOIN ' . $wpdb->posts . ' p ON p.ID=m.post_id WHERE m.meta_key="fs_signature_email" AND m.meta_value="' . $fs_signature_email . '"', array() );
+    $query = $wpdb->prepare('SELECT p.post_status as `status` FROM ' . $wpdb->posts . ' p LEFT JOIN ' . $wpdb->postmeta . ' m ON p.ID=m.post_id WHERE m.meta_key="fs_signature_email" AND m.meta_value="%s"', $fs_signature_email );
     $results = $wpdb->get_results( $query );
     $found = false;
     foreach( $results as $row ) {
-        if( $row->status === 'private' ) $found = true; // for this check we ignore drafts, so people can try again
+        if( $row->status === 'private' || $row->status === 'draft' ) $found = true; // for this check we ignore drafts, so people can try again
     }
     if($found) {
-        echo json_encode( array('error'=>'That email address is already registered') );
+        $link = esc_url( get_permalink( get_page_by_title( 'Confirm' ) ) );
+        $hasQS = strrpos ( $link, "?" ) !== false;
+        echo json_encode( array('error'=>'That email address is already registered<br/>'
+            . '<a href=\'' . $link . ( $hasQS ? '&' : '?') . 'email=' . $fs_signature_email . '\'>Click here to get an email to update your entry' ) );
         die;
     }
-    if($areYouThere !== "y") {
+    if( $areYouThere !== "y" ) {
         echo json_encode( array('error'=>'Please tick the box to show you are not a robot') );
         die;
     }
-    if($title==="") {
+    if( $title==="" ) {
         $fs_signature_public = false;
     }
-    if($fs_signature_country==="") {
+    if( $fs_signature_country==="" ) {
         echo json_encode( array('error'=>'Please select your country') );
         die;
     }
@@ -786,6 +792,7 @@ function fs_signature_confirm () {
     $add_signature_confirm_script = true;
     
     $secret = $_GET['secret'];
+    $email = $_GET['email'];
     global $wpdb;
     $found = false;
     if($secret!=="") {
@@ -822,7 +829,7 @@ function fs_signature_confirm () {
         <form name="confirm">
             <table border="0">
                 <tbody>
-                    <tr><td class="leftcol">Your email:</td><td class="rightcol"><input name="email" /></td></tr>
+                    <tr><td class="leftcol">Your email:</td><td class="rightcol"><input name="email" value="<?=$email?>"/></td></tr>
                     <tr><td colspan="2"><button type="button" id="confirmButton">Get a new email</button></td></tr>
                     <tr><td colspan="2"><div id="ajax-loading" class="farleft"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif"></div></td></tr>
                     <tr><td colspan="2"><div id="returnMessage"></div></td></tr>
