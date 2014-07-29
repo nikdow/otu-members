@@ -260,15 +260,13 @@ function fs_signature_edit_columns($columns) {
     $columns = array(
         "cb" => "<input type=\"checkbox\" />",
         "title" => "Name",
-        "fs_col_email" => "Email",
         "fs_col_public" => "Show name",
         "fs_col_country" => "Country",
         "fs_col_state" => "State",
-        "fs_col_newsletter" => "Newsletter",
         "fs_col_registered" => "Registered",
         "fs_col_campaign" => "Campaign",
         "fs_col_referrer" => "Referrer",
-        "fs_col_moderate" => "Comment moderated",
+        "fs_col_moderate" => "Moderated",
         "comment" => "Comment",
     );
     return $columns;
@@ -280,9 +278,6 @@ function fs_signature_custom_columns($column) {
         case "title":
             echo $post->post_title;
             break;
-        case "fs_col_email":
-            echo $custom["fs_signature_email"][0];
-            break;
         case "fs_col_public":
             echo ( $custom["fs_signature_public"][0] === "y" ? "Yes" : "" );
             break;
@@ -291,16 +286,6 @@ function fs_signature_custom_columns($column) {
             break;
         case "fs_col_state":
             echo ( $custom["fs_signature_country"][0]==="AU" ? $custom["fs_signature_state"][0] : "&nbsp;" );
-            break;
-        case "fs_col_newsletter":
-            switch ( $custom["fs_signature_newsletter"][0] ) {
-                case "y":
-                    echo "Occasional";
-                    break;
-                case "m":
-                    echo "Frequent";
-                    break;
-            }
             break;
         case "fs_col_registered":
             if($post->post_status==="private") {
@@ -325,7 +310,7 @@ function fs_signature_custom_columns($column) {
             echo $custom["fs_signature_moderate"][0];
             break;
         case "comment":
-            echo $post->post_excerpt;
+            echo substr( $post->post_excerpt, 0, 100 );
             break;
     }
 }

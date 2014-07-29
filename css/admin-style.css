@@ -18,5 +18,6 @@
     position: relative;
 }
 
-th#fs_col_public, th#fs_col_state {width: 50px;}
-th#fs_col_country, th#fs_col_newsletter, th#fs_col_moderate, th#fs_col_campaign, th#fs_col_registered {width: 80px;}
+th#fs_col_newsletter, th#fs_col_public, th#fs_col_state {width: 40px;}
+th#fs_col_country {width: 55px;}
+th#fs_col_email, th#fs_col_moderate, th#fs_col_campaign, th#fs_col_registered {width: 80px;}
