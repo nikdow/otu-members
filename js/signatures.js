@@ -30,7 +30,7 @@ signaturesApp.controller('signaturesCtrl', ['$scope', '$timeout',
         
         $scope.moderate = function(sig) {
             var data = { 'id':sig.id, 'action':'moderate' };
-            $.post(nectarLove.ajaxurl, data, function( response ) {
+            $.post( nectarLove.ajaxurl, data, function( response ) {
                 var ajaxdata = $.parseJSON(response);
                 if(ajaxdata.success) {
                     $.each($scope.sigs, function(index, sig) {

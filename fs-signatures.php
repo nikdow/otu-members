@@ -254,7 +254,7 @@ function create_fs_signature() {
             'rewrite' => false,
             'supports'=> array('title', 'excerpt' ) ,
             'show_in_nav_menus' => true,
-        )
+            )
     );
 }
 /*
@@ -1040,10 +1040,12 @@ function fs_signature_enter_title( $input ) {
     }
     return $input;
 }
-function fs_signature_add_admin_styles() {
+function fs_signatures_enqueue_scripts(  ) {
+    global $post;
+    if( $post->post_type !== 'fs_signature' ) return;
     wp_enqueue_style( 'admin-style', plugins_url( 'css/admin-style.css' , __FILE__ ) );
 }
-add_action('admin_init', 'fs_signature_add_admin_styles' );
+add_action( 'admin_enqueue_scripts', 'fs_signatures_enqueue_scripts' );
 /*
  * set cookies for referrer and campaign
  */
