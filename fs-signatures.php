@@ -964,7 +964,7 @@ function fs_signature_signatures (  ) {
                 <a ng-hide="paged===i" ng-click="gotoPage(i)" class="inactive">{{i}}</a>
             </span>
 
-            <a ng-show='paged<data.pages && showitems<data.pages' onclick='gotoPage(paged+1)'>Next &rsaquo;</a>
+            <a ng-show='paged<data.pages && showitems<data.pages' ng-click='gotoPage(paged+1)'>Next &rsaquo;</a>
             <a ng-show='paged<data.pages-1 && paged+range-1<data.pages && showitems < data.pages' ng-click='gotoPage(data.pages)'>Last &raquo;</a>
         </div>
     </div>
