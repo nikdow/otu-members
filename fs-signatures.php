@@ -932,7 +932,7 @@ function fs_signature_signatures (  ) {
             ?>
             _data = <?=json_encode($data)?>;
         </script>
-        <table id="signatures" border="0" width="90%">
+        <table id="signatures" border="0" width="90%" ng-cloak>
             <tbody>
                 <tr><th width="120">Name</th><th width="100">Location</th><th>Date</th>
                 <?php if(current_user_can('moderate_comments')) { ?>
@@ -951,7 +951,7 @@ function fs_signature_signatures (  ) {
                 </tr>
             </tbody>
         </table>
-        <div id="ajax-loading" ng-class="{'farleft':!showLoading}"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif"></div>
+        <div id="ajax-loading" ng-class="{'farleft':!showLoading}"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif" ng-cloak></div>
 
         <div>
             <a href="<?=get_site_url();?>/sign-the-petition-to-reform-helmet-law/">Click here to sign this petition</a>
@@ -959,7 +959,8 @@ function fs_signature_signatures (  ) {
         <?php
         // pagination adapted from http://sgwordpress.com/teaches/how-to-add-wordpress-pagination-without-a-plugin/                    
         ?>
-        <div ng-hide="data.pages===1" class="pagination"><span>Page {{paged}} of {{data.pages}}</span>
+        <div ng-hide="data.pages===1" class="pagination" ng-cloak>
+            <span>Page {{paged}} of {{data.pages}}</span>
             <a ng-show="paged>2 && paged > range+1 && showitems<data.pages" ng-click="gotoPage(1)">&laquo; First</a>
             <a ng-show="paged>1 && showitems<data.pages" ng-click='gotoPage(paged-1)'>&lsaquo; Previous</a>
 

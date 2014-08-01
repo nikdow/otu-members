@@ -36,7 +36,7 @@ table#signatures th {
 .pagination span, .pagination a {
     display:block;
     float:left;
-    margin: 2px 2px 2px 0;
+    margin: 0px 2px 0px 0;
     padding:6px 9px 5px 9px;
     text-decoration:none;
     width:auto;
@@ -49,8 +49,8 @@ table#signatures th {
     background: #3279BB;
 }
 
-.pagination .current{
-    padding:6px 9px 5px 9px;
+.pagination .current, .pagination .inactive {
+    padding:0px 9px 0px 9px;
     background: #3279BB;
     color:#fff;
 }
