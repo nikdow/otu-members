@@ -992,13 +992,14 @@ function fs_page_sign ( $atts ) {
     <form name="register<?=($popup ? "_popup" : "");?>">
         <table border="0"<?= ($narrow ? ' width="275"' : '');?>>
             <tbody>
-            <tr><td class="leftcol">name:</td><td class="rightcol"><input class="inputc" type="text" name="title" id="name<?=($popup ? "_popup" : "");?>"></td></tr>
+            <tr><td class="leftcol">name:</td><td class="rightcol"><input<?=($narrow || $popup) ? " class='smallinput'" : "";?> type="text" name="title" id="name<?=($popup ? "_popup" : "");?>"></td></tr>
             <tr valign="top"><td class="leftcol"><input name="fs_signature_public" class="inputc" value="y" checked="checked" id="public<?=($popup ? "_popup" : "");?>" type="checkbox"></td><td>Show my name on this website</td></tr>
-            <tr valign="top"><td class="leftcol">email:</td><td class="rightcol"><input type="email" class="inputc" name="fs_signature_email" id="email<?=($popup ? "_popup" : "");?>" title="email address"><br>
+            <tr valign="top"><td class="leftcol">email:</td><td class="rightcol"><input type="email"<?=($narrow || $popup) ? " class='smallinput'" : "";?> name="fs_signature_email" id="email<?=($popup ? "_popup" : "");?>" title="email address"><br>
                     <div class="smallfont">An email will be sent to you to confirm this address, to ensure the integrity of your registration.</div></td></tr>
             <tr valign="top"><td class="leftcol"><input name="fs_signature_newsletter" class="inputc" value="y" checked="checked" id="newsletter" type="checkbox"></td><td class="medfont">Send me an occasional email if something really important is happening.</td></tr>
 
-            <tr><td class="leftcol">Country:</td><td><select id="country<?=($popup ? "_popup" : "");?>" class="inputc" name="fs_signature_country" style="width: 200px;">
+            <tr><td class="leftcol">Country:</td>
+            <td class="rightcol"><select id="country<?=($popup ? "_popup" : "");?>"<?=($narrow || $popup) ? " class='smallinput'" : "";?> name="fs_signature_country" style="width: 200px;">
             <option value="" selected="selected">Please select</option>
             <?php
             $fs_country = fs_country();
@@ -1007,12 +1008,14 @@ function fs_page_sign ( $atts ) {
             <?php } ?>
             </select></td></tr>
 
-            <tr><td class="state<?=($popup ? "_popup" : "");?> leftcol removed">State:</td><td class="rightcol state<?=($popup ? "_popup" : "");?> removed"><select name="fs_signature_state" class="inputc">
-            <?php
-            $fs_states = fs_states();
-            foreach( $fs_states as $ab => $title ) { ?>
-                <option value="<?=$ab;?>"><?php echo $title;?></option>
-            <?php } ?>
+            <tr><td class="state<?=($popup ? "_popup" : "");?> leftcol removed">State:</td>
+                <td class="rightcol state<?=($popup ? "_popup" : "");?> removed">
+                <select name="fs_signature_state"<?=($narrow || $popup) ? " class='smallinput'" : "";?>>
+                <?php
+                $fs_states = fs_states();
+                foreach( $fs_states as $ab => $title ) { ?>
+                    <option value="<?=$ab;?>"><?php echo $title;?></option>
+                <?php } ?>
             </select></td></tr>
 
             <tr><td class="leftcol"><input id="simpleTuring<?=($popup ? "_popup" : "");?>" name="areYouThere" type="checkbox" value="y" class="inputc"></td><td class="medfont">Tick this box to show you are not a robot</td></tr>
