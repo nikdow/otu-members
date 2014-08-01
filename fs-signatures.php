@@ -874,7 +874,7 @@ function fs_signature_confirm () {
                 <?php } ?>
                 </select></td></tr>
 
-                <tr><td class="leftcol">Comment:</td><td class="rightcol"><textarea id="message" name="excerpt" class="inputc"><?=$sig->post_excerpt?></textarea><br><font size="-2">Comments are subject to moderation</font></td></tr>
+                <tr><td class="leftcol">Comment:</td><td class="rightcol"><textarea id="message" name="excerpt" class="inputc"><?=$sig->post_excerpt?></textarea><br><span class="smallfont">Comments are subject to moderation</span></td></tr>
                 <tr><td colspan="2"><button type="button" id="confirmButton">Confirm</button></td></tr>
                 <tr><td colspan="2"><div id="ajax-loading" class="farleft"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif"></div></td></tr>
                 <tr><td colspan="2"><div id="returnMessage"></div></td></tr>
@@ -995,8 +995,8 @@ function fs_page_sign ( $atts ) {
             <tr><td class="leftcol">name:</td><td class="rightcol"><input class="inputc" type="text" name="title" id="name<?=($popup ? "_popup" : "");?>"></td></tr>
             <tr valign="top"><td class="leftcol"><input name="fs_signature_public" class="inputc" value="y" checked="checked" id="public<?=($popup ? "_popup" : "");?>" type="checkbox"></td><td>Show my name on this website</td></tr>
             <tr valign="top"><td class="leftcol">email:</td><td class="rightcol"><input type="email" class="inputc" name="fs_signature_email" id="email<?=($popup ? "_popup" : "");?>" title="email address"><br>
-            <span class="smallfont">An email will be sent to you to confirm this address, to ensure the integrity of your registration.</span></td></tr>
-            <tr valign="top"><td class="leftcol"><input name="fs_signature_newsletter" class="inputc" value="y" checked="checked" id="newsletter" type="checkbox"></td><td>Send me an occasional email if something really important is happening.</td></tr>
+                    <div class="smallfont">An email will be sent to you to confirm this address, to ensure the integrity of your registration.</div></td></tr>
+            <tr valign="top"><td class="leftcol"><input name="fs_signature_newsletter" class="inputc" value="y" checked="checked" id="newsletter" type="checkbox"></td><td class="medfont">Send me an occasional email if something really important is happening.</td></tr>
 
             <tr><td class="leftcol">Country:</td><td><select id="country<?=($popup ? "_popup" : "");?>" class="inputc" name="fs_signature_country" style="width: 200px;">
             <option value="" selected="selected">Please select</option>
@@ -1015,8 +1015,8 @@ function fs_page_sign ( $atts ) {
             <?php } ?>
             </select></td></tr>
 
-            <tr><td class="leftcol"><input id="simpleTuring<?=($popup ? "_popup" : "");?>" name="areYouThere" type="checkbox" value="y" class="inputc"></td><td>Tick this box to show you are not a robot</td></tr>
-            <tr><td class="leftcol">Comment:</td><td class="rightcol"><textarea name="excerpt" class="inputc"></textarea><br><font size="-2">Comments are subject to moderation</font></td></tr>
+            <tr><td class="leftcol"><input id="simpleTuring<?=($popup ? "_popup" : "");?>" name="areYouThere" type="checkbox" value="y" class="inputc"></td><td class="medfont">Tick this box to show you are not a robot</td></tr>
+            <tr><td class="leftcol">Comment:</td><td class="rightcol"><textarea name="excerpt" class="inputc"></textarea><br><div class="smallfont">Comments are subject to moderation</div></td></tr>
             <tr><td colspan="2"><button type="button" id="saveButton<?=($popup ? "_popup" : "");?>">Save</button></td></tr>
             <tr><td colspan="2"><div id="ajax-loading<?=($popup ? "_popup" : "");?>" class="farleft"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif"></div></td></tr>
             <tr><td colspan="2"><div id="returnMessage<?=($popup ? "_popup" : "");?>"></div></td></tr>
