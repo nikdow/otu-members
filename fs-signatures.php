@@ -11,13 +11,7 @@ defined('ABSPATH') or die("No script kiddies please!");
 /*
  * Signatures - custom post type and facilities to support the big petition
  */
-function signature_register_js() {	// support for signup form, which appears on two pages and in a popup
-    wp_register_script('signature', plugins_url( 'js/signature.js' , __FILE__ ), 'jquery');
-    wp_enqueue_script('signature');
-    wp_register_style('fs-signature-styles', plugins_url( 'css/style.css', __FILE__ ) );
-    wp_enqueue_style('fs-signature-styles');
-}
-add_action('wp_enqueue_scripts', 'signature_register_js');
+
 /*
  * Signatures AJAX calls
  */
@@ -909,6 +903,7 @@ function enqueue_signature_signatures_script() {
         wp_enqueue_script('angular');
         wp_enqueue_script('angular-animate');
 	wp_enqueue_script('signatures');
+        wp_enqueue_style('fs-signature-styles');
 }
 function fs_signature_signatures (  ) {
     global $add_signature_signatures_script;
@@ -947,7 +942,7 @@ function fs_signature_signatures (  ) {
                     <td><a ng-hide="sig.moderate==='y' || sig.comment===''" ng-click="moderate(sig)" href="#">Approve</a><span ng-hide="sig.moderate==='y' || sig.comment===''"> | </span>
                         <a ng-hide="sig.comment===''" href="<?=get_site_url();?>/wp-admin/post.php?post={{sig.id}}&action=edit">Edit</a></td>
                     <?php } ?>
-                    <td>{{sig.comment}}</td>
+                    <td class="fs-signatures-comments">{{sig.comment}}</td>
                 </tr>
             </tbody>
         </table>
@@ -980,7 +975,22 @@ add_shortcode('signatures', 'fs_signature_signatures' );
 /* 
  * Shortcode for signature submission form
  */
+function register_signature_register_script() {
+    wp_register_script('signature', plugins_url( 'js/signature.js' , __FILE__ ), 'jquery');
+    wp_register_style('fs-signature-styles', plugins_url( 'css/style.css', __FILE__ ) );	
+}
+function enqueue_signature_register_script() {	// support for signup form, which appears on two pages and in a popup
+    global $add_signature_register_script;
+    if( ! $add_signature_register_script ) return;
+    wp_enqueue_script('signature');
+    wp_enqueue_style('fs-signature-styles');
+}
+add_action('init', 'register_signature_register_script' );
+add_action( 'wp_footer', 'enqueue_signature_register_script' );
 function fs_page_sign ( $atts ) { 
+    global $add_signature_register_script;
+    $add_signature_register_script = true;
+    
     $a = shortcode_atts( array(
         'narrow' => '0',
         'popup' => '0',
@@ -1000,7 +1010,7 @@ function fs_page_sign ( $atts ) {
             <tr valign="top"><td class="leftcol"><input name="fs_signature_newsletter" class="inputc" value="y" checked="checked" id="newsletter" type="checkbox"></td><td class="medfont">Send me an occasional email if something really important is happening.</td></tr>
 
             <tr><td class="leftcol">Country:</td>
-            <td class="rightcol"><select id="country<?=($popup ? "_popup" : "");?>"<?=($narrow || $popup) ? " class='smallinput'" : "";?> name="fs_signature_country" style="width: 200px;">
+            <td class="rightcol"><select id="country<?=($popup ? "_popup" : "");?>"<?=($narrow || $popup) ? " class='smallinput'" : "";?> name="fs_signature_country">
             <option value="" selected="selected">Please select</option>
             <?php
             $fs_country = fs_country();

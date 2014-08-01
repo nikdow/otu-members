@@ -59,3 +59,24 @@ table#signatures th {
     margin-top: -50px;
 }
 
+.smallfont {
+    font-size: 10px;
+    line-height: 1.1 ! important;
+}
+.medfont {
+    font-size: 12px;
+    line-height: 1.2 ! important;
+}
+.rightcol input.smallinput, .rightcol select.smallinput {
+    padding: 5px !important;
+    width: 100%;
+}
+.rightcol input, .rightcol select {
+    width: 50%;
+}
+.leftcol {
+    vertical-align: middle;
+}
+.fs-signatures-comments {
+    line-height: 1.1;
+}
