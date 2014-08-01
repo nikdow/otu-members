@@ -43,6 +43,9 @@ table#signatures th {
     color:#fff;
     background: #555;
 }
+.pagination a {
+    cursor: pointer;
+}
 
 .pagination a:hover{
     color:#fff;
