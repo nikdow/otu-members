@@ -1001,7 +1001,7 @@ function fs_page_sign ( $atts ) {
     ob_start() ?>
 
     <form name="register<?=($popup ? "_popup" : "");?>">
-        <table border="0"<?= ($narrow ? ' style="width: 275px;"' : '');?>>
+        <table border="0">
             <tbody>
             <tr><td class="leftcol">name:</td><td class="rightcol"><input<?=($narrow || $popup) ? " class='smallinput'" : "";?> type="text" name="title" id="name<?=($popup ? "_popup" : "");?>"></td></tr>
             <tr valign="top"><td class="leftcol"><input name="fs_signature_public" class="inputc" value="y" checked="checked" id="public<?=($popup ? "_popup" : "");?>" type="checkbox"></td><td>Show my name on this website</td></tr>
