@@ -775,20 +775,23 @@ add_action('init', 'register_signature_confirm_script' );
 add_action( 'wp_footer', 'enqueue_signature_confirm_script' );
 function register_signature_confirm_script() {
 	wp_register_script('confirm',  plugins_url( 'js/confirm.js', __FILE__ ), 'jquery');
+        wp_register_style('fs-signature-styles', plugins_url( 'css/style.css', __FILE__ ) );
 }
 function enqueue_signature_confirm_script() {
     global $add_signature_confirm_script;
     if( ! $add_signature_confirm_script ) return;
     wp_enqueue_script('confirm');
+    wp_enqueue_style('fs-signature-styles');
 }
 function fs_signature_confirm () {
     global $add_signature_confirm_script;
-    $add_signature_confirm_script = true;
+    $add_signature_confirm_script = true;   
     
     $secret = $_GET['secret'];
     $email = $_GET['email'];
     global $wpdb;
     $found = false;
+    $update = false;
     if($secret!=="") {
         $query = $wpdb->prepare ( "SELECT * FROM " . $wpdb->postmeta . " WHERE meta_value='%s' AND meta_key='fs_signature_secret'", $secret );
         $row = $wpdb->get_row( $query );
@@ -880,7 +883,27 @@ function fs_signature_confirm () {
         </form>
     <?php } ?>
     <P><a href="<?=get_site_url();?>/signatures">See who has signed</a></p>
-    <?php
+    <?php if ( ! $update ) { ?>
+        <!-- Google Code for new registration Conversion Page -->
+        <script type="text/javascript">
+        /* <![CDATA[ */
+        var google_conversion_id = 1000718227;
+        var google_conversion_language = "en";
+        var google_conversion_format = "1";
+        var google_conversion_color = "ffffff";
+        var google_conversion_label = "ga-OCK2vplYQk_-W3QM";
+        var google_remarketing_only = false;
+        /* ]]> */
+        </script>
+        <script type="text/javascript" src="//www.googleadservices.com/pagead/conversion.js">
+        </script>
+        <noscript>
+            <div style="display:inline;">
+            <img height="1" width="1" style="border-style:none;" alt="" src="//www.googleadservices.com/pagead/conversion/1000718227/?label=ga-OCK2vplYQk_-W3QM&amp;guid=ON&amp;script=0"/>
+            </div>
+        </noscript>
+    <?php }
+    
     return ob_get_clean();
 }
 add_shortcode('confirm', 'fs_signature_confirm' );
