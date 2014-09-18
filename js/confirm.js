@@ -30,7 +30,7 @@ jQuery(document).ready(function($){
            }
            $('#ajax-loading').addClass('farleft');
         });
-      ga('send', 'event', 'Registration', data.action );
+      ga('send', 'event', 'Registration', 'confirm' );
     } );
     
 });

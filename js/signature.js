@@ -49,7 +49,7 @@ jQuery(document).ready(function($){
              }
              $('#ajax-loading'+str).addClass('farleft');
           });
-        ga('send', 'event', 'Registration', data.action);
+        ga('send', 'event', 'Registration', 'register');
       } );
     });
 });
