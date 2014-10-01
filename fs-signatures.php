@@ -1102,3 +1102,79 @@ function fs_signature_head_cookies() {
         $campaign = $_COOKIE['campaign'];
     }
 }
+/*
+ * quick edit enhancements
+ * http://codex.wordpress.org/Plugin_API/Action_Reference/quick_edit_custom_box
+ */
+add_action( 'quick_edit_custom_box', 'fs_signatures_quickedit', 10, 2 );
+
+function fs_signatures_quickedit( $column_name, $post_type ) {
+    
+    if ( $post_type !== "fs_signature") {
+        return;
+    }
+    
+    static $printNonce = TRUE;
+    if ( $printNonce ) {
+        $printNonce = FALSE;
+        $slug = 'fs_signature';
+        wp_nonce_field( plugin_basename( __FILE__ ), $slug . '_edit_nonce' );
+    }
+
+    ?>
+    <fieldset class="inline-edit-col-rightk">
+      <div class="inline-edit-col column-<?php echo $column_name ?>">
+        <label class="inline-edit-group">
+        <?php 
+         switch ( $column_name ) {
+         case 'fs_col_moderate':
+             ?><span class="title">Moderated</span><input type="checkbox" name="moderated" value="y"/><?php
+             break;
+         }
+        ?>
+        </label>
+      </div>
+    </fieldset>
+    <?php
+}
+
+add_action('admin_footer-edit.php', 'admin_edit_signatures_foot', 11);
+
+/* load scripts in the footer */
+function admin_edit_signatures_foot() {
+    $slug = 'fs_signature';
+    # load only when editing a signature
+    if (   (isset($_GET['page']) && $_GET['page'] == $slug)
+        || (isset($_GET['post_type']) && $_GET['post_type'] == $slug))
+    {
+        echo '<script type="text/javascript" src="', plugins_url('js/admin_edit.js', __FILE__), '"></script>';
+    }
+}
+
+add_action( 'save_post', 'save_signature_meta' );
+
+function save_signature_meta( $post_id ) {
+    /* in production code, $slug should be set only once in the plugin,
+       preferably as a class property, rather than in each function that needs it.
+     */
+    $slug = 'fs_signature';
+    if ( $slug !== $_POST['post_type'] ) {
+        return;
+    }
+    if ( !current_user_can( 'edit_post', $post_id ) ) {
+        return;
+    }
+    $_POST += array("{$slug}_edit_nonce" => '');
+    if ( !wp_verify_nonce( $_POST["{$slug}_edit_nonce"],
+                           plugin_basename( __FILE__ ) ) )
+    {
+        return;
+    }
+
+    # checkboxes are submitted if checked, absent if not
+    if ( isset( $_REQUEST['moderated'] ) ) {
+        update_post_meta($post_id, 'fs_signature_moderate', "y");
+    } else {
+        delete_post_meta($post_id, 'fs_signature_moderate');
+    }
+}
