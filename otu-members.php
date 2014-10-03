@@ -71,12 +71,12 @@ function add_otu_fields( $user )
                 
             <tr>
                 <th><label for="pmpro_deceased">Deceased</label></th>
-                <td><input type="checkbox" name="pmpro_deceased" value="1" <?php echo (get_the_author_meta( 'pmpro_deceased', $user->ID )==1 ? "SELECTED" : ""); ?> /></td>
+                <td><input type="checkbox" name="pmpro_deceased" value="1" <?php echo (get_the_author_meta( 'pmpro_deceased', $user->ID )==1 ? "checked" : ""); ?> /></td>
             </tr>
             
             <tr>
                 <th><label for="pmpro_do_not_contact">Do not contact</label></th>
-                <td><input type="checkbox" name="pmpro_do_not_contact" value="1" <?php echo (get_the_author_meta( 'pmpro_do_not_contact', $user->ID )==1 ? "SELECTED" : ""); ?> /></td>
+                <td><input type="checkbox" name="pmpro_do_not_contact" value="1" <?php echo (get_the_author_meta( 'pmpro_do_not_contact', $user->ID )==1 ? "checked" : ""); ?> /></td>
             </tr>
            
         </table>
