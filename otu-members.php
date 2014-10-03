@@ -91,7 +91,7 @@ function save_otu_fields( $user_id )
     update_user_meta( $user_id,'pmpro_regimental_number', sanitize_text_field( $_POST['pmpro_regimental_number'] ) );
     
     $user = get_userdata( $user_id );
-    if( in_array('subscriber', $user['roles'] ) ) {
+    if( in_array('subscriber', $user->roles ) ) {
         // password is regimental number
         $hash = wp_hash_password( $_POST['pmpro_regimental_number'] );
         wp_update_user( array('ID'=>$user_id, 'user_pass'=>$hash, 'user_login' ) );
