@@ -21,7 +21,12 @@ function add_otu_fields( $user )
         <table class="form-table">
             <tr>
                 <th><label for="pmpro_regimental_number">Regimental Number</label></th>
-                <td><input type="text" name="pmpro_regimental_number" value="<?php echo esc_attr(get_the_author_meta( 'pmpro_regimental_number', $user->ID )); ?>" class="regular-text" /></td>
+                <td><input type="text" name="pmpro_regimental_number" value="<?php echo esc_attr(get_the_author_meta( 'pmpro_regimental_number', $user->ID )); ?>" class="regular-text" />
+                <br/>
+                Warning - changing the regimental number or surname of an existing user will break things.
+                <br/>
+                Preferable to create a new user, then delete the old user and transfer their posts.
+                </td>
             </tr>
 
             <tr>
@@ -69,6 +74,52 @@ function add_otu_fields( $user )
                 <td><input type="checkbox" name="pmpro_deceased" value="1" <?php echo (get_the_author_meta( 'pmpro_deceased', $user->ID )==1 ? "SELECTED" : ""); ?> /></td>
             </tr>
             
+            <tr>
+                <th><label for="pmpro_do_not_contact">Do not contact</label></th>
+                <td><input type="checkbox" name="pmpro_do_not_contact" value="1" <?php echo (get_the_author_meta( 'pmpro_do_not_contact', $user->ID )==1 ? "SELECTED" : ""); ?> /></td>
+            </tr>
+           
         </table>
     <?php
+}
+
+add_action( 'personal_options_update', 'save_otu_fields' );
+add_action( 'edit_user_profile_update', 'save_otu_fields' );
+
+function save_otu_fields( $user_id )
+{
+    update_user_meta( $user_id,'pmpro_regimental_number', sanitize_text_field( $_POST['pmpro_regimental_number'] ) );
+    
+    $user = get_userdata( $user_id );
+    if( in_array('subscriber', $user['roles'] ) ) {
+        // password is regimental number
+        $hash = wp_hash_password( $_POST['pmpro_regimental_number'] );
+        wp_update_user( array('ID'=>$user_id, 'user_pass'=>$hash, 'user_login' ) );
+        // username is lastname_regimental number
+        global $wpdb;
+        $wpdb->update($wpdb->users, 
+            array('user_login' => $_POST['last_name'] . "_" . $_POST['pmpro_regimental_number'] ),
+            array( 'ID'=>$user_id ),
+            array( '%s'),
+            array( '%d' )
+        );
+    }
+    update_user_meta( $user_id,'pmpro_baddress1', sanitize_text_field( $_POST['pmpro_baddress1'] ) );
+    update_user_meta( $user_id,'pmpro_baddress2', sanitize_text_field( $_POST['pmpro_baddress2'] ) );
+    update_user_meta( $user_id,'bpmpro_bcity', sanitize_text_field( $_POST['bpmpro_bcity'] ) );
+    update_user_meta( $user_id,'pmpro_bstate', sanitize_text_field( $_POST['pmpro_bstate'] ) );
+    update_user_meta( $user_id,'pmpro_bzipcode', sanitize_text_field( $_POST['pmpro_bzipcode'] ) );
+    update_user_meta( $user_id,'pmpro_bphone', sanitize_text_field( $_POST['pmpro_bphone'] ) );
+    update_user_meta( $user_id,'pmpro_bmobile', sanitize_text_field( $_POST['pmpro_bmobile'] ) );
+    update_user_meta( $user_id,'pmpro_bbusiness', sanitize_text_field( $_POST['pmpro_bbusiness'] ) );
+    if(isset($_POST['pmpro_deceased'])) {
+        update_user_meta( $user_id,'pmpro_deceased', 1 );
+    } else {
+        update_user_meta( $user_id,'pmpro_deceased', 0 );
+    }
+    if(isset($_POST['pmpro_do_not_contact'])) {
+        update_user_meta( $user_id,'pmpro_do_not_contact', 1 );
+    } else {
+        update_user_meta( $user_id,'pmpro_do_not_contact', 0 );
+    }
 }
