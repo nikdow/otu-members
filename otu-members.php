@@ -129,7 +129,6 @@ function otu_add_user_columns( $defaults ) {
      unset($defaults['posts']);
      return $defaults;
 }
-/*
 function otu_add_custom_user_columns($value, $column_name, $id) {
     $user = get_userdata( $id );
     switch ($column_name ) {
@@ -147,9 +146,10 @@ function otu_add_custom_user_columns($value, $column_name, $id) {
                 return "";
             }
             break;
+        default:
+            return $value;
     }
 }
 add_action('manage_users_custom_column', 'otu_add_custom_user_columns', 15, 3);
- */
 add_filter('manage_users_columns', 'otu_add_user_columns', 15, 1);
  
