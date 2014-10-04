@@ -123,13 +123,13 @@ function save_otu_fields( $user_id )
         update_user_meta( $user_id,'pmpro_do_not_contact', 0 );
     }
 }
-/*
 function otu_add_user_columns( $defaults ) {
      $defaults['deceased'] = __('Deceased', 'user-column');
      $defaults['do_not_contact'] = __('Do not contact', 'user-column');
      unset($defaults['posts']);
      return $defaults;
 }
+/*
 function otu_add_custom_user_columns($value, $column_name, $id) {
     $user = get_userdata( $id );
     switch ($column_name ) {
@@ -150,6 +150,6 @@ function otu_add_custom_user_columns($value, $column_name, $id) {
     }
 }
 add_action('manage_users_custom_column', 'otu_add_custom_user_columns', 15, 3);
-add_filter('manage_users_columns', 'otu_add_user_columns', 15, 1);
- * 
  */
+add_filter('manage_users_columns', 'otu_add_user_columns', 15, 1);
+ 
