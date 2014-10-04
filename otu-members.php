@@ -133,10 +133,14 @@ function add_custom_user_columns($value, $column_name, $id) {
     $user = get_userdata( $id );
     switch ($column_name ) {
         case 'deceased':
-            return $user->pmpro_deceased;
+            if($user->pmpro_deceased ) {
+                return "<i class='fa fa-heart fa-1x pull-left'>";
+            }         
             break;
         case 'do_not_contact':
-            return $user->pmpro_do_not_contact;
+            if ( $user->pmpro_do_not_contact ) {
+                return "<i class='fa fa-heart pull-left'>";
+            }
             break;
     }
 }
