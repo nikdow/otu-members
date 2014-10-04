@@ -127,7 +127,7 @@ function save_otu_fields( $user_id )
 function otu_add_user_columns( $defaults ) {
      $defaults['deceased'] = __('Deceased', 'user-column');
      $defaults['do_not_contact'] = __('Do not contact', 'user-column');
-     $defaults['posts'] = "";
+     unset($defaults['posts']);
      return $defaults;
 }
 function otu_add_custom_user_columns($value, $column_name, $id) {
