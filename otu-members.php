@@ -127,6 +127,7 @@ function save_otu_fields( $user_id )
 function add_user_columns( $defaults ) {
      $defaults['deceased'] = __('Deceased', 'user-column');
      $defaults['do_not_contact'] = __('Do not contact', 'user-column');
+     $defaults['posts'] = "";
      return $defaults;
 }
 function add_custom_user_columns($value, $column_name, $id) {
@@ -134,18 +135,20 @@ function add_custom_user_columns($value, $column_name, $id) {
     switch ($column_name ) {
         case 'deceased':
             if($user->pmpro_deceased == "1" ) {
-                return "<i class='fa fa-heart fa-1x pull-left'>";
+                return "Yes";
             } else {
                 return "";
             }
             break;
         case 'do_not_contact':
             if ( $user->pmpro_do_not_contact == "1" ) {
-                return "<i class='fa fa-heart pull-left'>";
+                return "Yes";
             } else { 
                 return "";
             }
             break;
+        case 'posts':
+            return "";
     }
 }
 add_action('manage_users_custom_column', 'add_custom_user_columns', 15, 3);
