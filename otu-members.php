@@ -135,11 +135,15 @@ function add_custom_user_columns($value, $column_name, $id) {
         case 'deceased':
             if($user->pmpro_deceased ) {
                 return "<i class='fa fa-heart fa-1x pull-left'>";
-            }         
+            } else {
+                return "";
+            }
             break;
         case 'do_not_contact':
             if ( $user->pmpro_do_not_contact ) {
                 return "<i class='fa fa-heart pull-left'>";
+            } else { 
+                return "";
             }
             break;
     }
