@@ -130,7 +130,7 @@ function add_user_columns( $defaults ) {
      return $defaults;
 }
 function add_custom_user_columns($value, $column_name, $id) {
-    $user = get_userdata( $user_id );
+    $user = get_userdata( $id );
     switch ($column_name ) {
         case 'deceased':
             return $user->pmpro_deceased;
