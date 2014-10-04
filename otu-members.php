@@ -124,13 +124,13 @@ function save_otu_fields( $user_id )
     }
 }
 
-function add_user_columns( $defaults ) {
+function otu_add_user_columns( $defaults ) {
      $defaults['deceased'] = __('Deceased', 'user-column');
      $defaults['do_not_contact'] = __('Do not contact', 'user-column');
      $defaults['posts'] = "";
      return $defaults;
 }
-function add_custom_user_columns($value, $column_name, $id) {
+function otu_add_custom_user_columns($value, $column_name, $id) {
     $user = get_userdata( $id );
     switch ($column_name ) {
         case 'deceased':
@@ -151,5 +151,5 @@ function add_custom_user_columns($value, $column_name, $id) {
             return "";
     }
 }
-add_action('manage_users_custom_column', 'add_custom_user_columns', 15, 3);
-add_filter('manage_users_columns', 'add_user_columns', 15, 1);
+add_action('manage_users_custom_column', 'otu_add_custom_user_columns', 15, 3);
+add_filter('manage_users_columns', 'otu_add_user_columns', 15, 1);
