@@ -182,9 +182,10 @@ class Otu_login extends WP_Widget {
                 if ( ! is_user_logged_in() ) { // Display WordPress login form:
                     ?>
                     <h3 class="widget-title">Login</h3>
-                    <form name="loginform-custom" id="loginform-custom" action="<?=site_url()?>/wp-login.php" method="post">
+                    <form name="loginform-custom" id="loginform-custom" onSubmit="loginSubmit(this)" action="<?=site_url()?>/wp-login.php" method="post">
                         <p class="login-username"><label for="user_login">surname / username</label>
-                            <input type="text" name="log" id="user_login" class="input" size="20"/>
+                            <input type="text" name="partial_log" id="user_login" class="input" size="20"/>
+                            <input type="hidden" name="log" />
                         </p>
                         <P class="login-password">
                             <label for="user_pass">Reg No / password</label>
@@ -212,42 +213,9 @@ class Otu_login extends WP_Widget {
                 echo $after_widget;
 	}
 }
-/*
- * login shortcode
- */
-function otu_login_shortcode ( $atts ) {
-    ob_start();
-        if ( ! is_user_logged_in() ) { // Display WordPress login form:
-             ?>
-             <h3>Login</h3>
-             <form name="loginform-custom-shortcode" id="loginform-custom-shortcode" action="<?=site_url()?>/wp-login.php" method="post">
-                 <p class="login-username"><label for="user_login">surname / username</label>
-                     <input type="text" name="log" id="user_login" class="input" size="20"/>
-                 </p>
-                 <P class="login-password">
-                     <label for="user_pass">Reg No / password</label>
-                     <input type="password" name="pwd" id="user_pass" class="input" size="20"/>
-                 </P>
-                 <?php do_action( 'login_form' );?>
-                 <p class="login-remember">
-                     <label>
-                         <input name="rememberme" type="checkbox" id="rememberme" value="forever">
-                         Remember Me
-                     </label>
-                 </p>
-                 <p class="login-submit">
-                     <input type="submit" name="wp-submit" id="wp-submit" class="button-primary" value="Log In"/>
-                 </p>
-             </form>
-             <?php
-         } else { // If logged in:
-             wp_loginout( home_url() ); // Display "Log Out" link.
-             if( current_user_can( 'moderate_comments' ) ) {
-                 echo " | ";
-                 wp_register('', ''); // Display "Site Admin" link.
-             }
-         }      
-    return ob_get_clean();
-}
-add_shortcode ( 'otu-login', 'otu_login_shortcode' );
 
+add_action('init', 'register_otu_script' );
+function register_otu_script() {
+	wp_register_script('script',  plugins_url( 'js/script.js', __FILE__ ), 'jquery');
+        wp_enqueue_script('script');
+}
