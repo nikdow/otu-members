@@ -183,12 +183,12 @@ class Otu_login extends WP_Widget {
                     ?>
                     <h3 class="widget-title">Login</h3>
                     <form name="loginform-custom" id="loginform-custom" onSubmit="loginSubmit(this)" action="<?=site_url()?>/wp-login.php" method="post">
-                        <p class="login-username"><label for="user_login">surname / username</label>
+                        <p class="login-username"><label for="user_login">surname</label>
                             <input type="text" name="partial_log" id="user_login" class="input" size="20"/>
                             <input type="hidden" name="log" />
                         </p>
                         <P class="login-password">
-                            <label for="user_pass">Reg No / password</label>
+                            <label for="user_pass">Reg No</label>
                             <input type="password" name="pwd" id="user_pass" class="input" size="20"/>
                         </P>
                         <?php do_action( 'login_form' );?>
