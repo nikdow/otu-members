@@ -156,3 +156,76 @@ function otu_add_custom_user_columns($value, $column_name, $id) {
 add_action('manage_users_custom_column', 'otu_add_custom_user_columns', 15, 3);
 add_filter('manage_users_columns', 'otu_add_user_columns', 15, 1);
 
+/**
+ * login widget
+ */
+add_action( 'widgets_init', 'login_widget' );
+
+/**
+ * Register login widget.
+ */
+function login_widget() {
+	register_widget( 'Otu_login' );
+}
+
+class Otu_login extends WP_Widget {
+
+        function __construct() {
+		$widget_ops = array('classname' => 'widget_login', 'description' => __( 'login form') );
+		parent::__construct('login', __('Login'), $widget_ops);
+	}
+
+	function widget( $args, $instance ) {
+		extract($args);
+
+		echo $before_widget;
+                if ( ! is_user_logged_in() ) { // Display WordPress login form:
+                    ?>
+                    <h3 class="widget-title">Login</h3>
+                    <form name="loginform-custom" id="loginform-custom" action="<?=site_url()?>/wp-login.php" method="post">
+                        <p class="login-username"><label for="user_login">surname / username</label>
+                            <input type="text" name="log" id="user_login" class="input" size="20"/>
+                        </p>
+                        <P class="login-password">
+                            <label for="user_pass">Reg No / password</label>
+                            <input type="password" name="pwd" id="user_pass" class="input" size="20"/>
+                        </P>
+                        <?php do_action( 'login_form' );?>
+                        <p class="login-remember">
+                            <label>
+                                <input name="rememberme" type="checkbox" id="rememberme" value="forever">
+                                Remember Me
+                            </label>
+                        </p>
+                        <p class="login-submit">
+                            <input type="submit" name="wp-submit" id="wp-submit" class="button-primary" value="Log In"/>
+                        </p>
+                    </form>
+                    <?php
+                } else { // If logged in:
+                    wp_loginout( home_url() ); // Display "Log Out" link.
+                    if( current_user_can( 'moderate_comments' ) ) {
+                        echo " | ";
+                        wp_register('', ''); // Display "Site Admin" link.
+                    }
+                }
+                echo $after_widget;
+	}
+
+	function update( $new_instance, $old_instance ) {
+		$instance = $old_instance;
+		$instance['title'] = strip_tags($new_instance['title']);
+
+		return $instance;
+	}
+
+	function form( $instance ) {
+		$instance = wp_parse_args( (array) $instance, array( 'title' => '' ) );
+		$title = strip_tags($instance['title']);
+?>
+		<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label>
+		<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></p>
+<?php
+	}
+}
+
