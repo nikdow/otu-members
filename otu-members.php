@@ -223,6 +223,7 @@ function register_otu_script() {
  * shortcode to insert link to sign up for non-financials
  */
 function otu_signup( $atts ){
+    ob_start();
 	 if ( is_user_logged_in() ) {
              $level = pmpro_getMembershipLevelForUser();
              $url = pmpro_url("checkout", "?level=1");
@@ -236,5 +237,6 @@ function otu_signup( $atts ){
          } else { ?>
              <a href="<?=site_url()?>#login">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
          <?php }
+    return ob_get_clean();
 }
 add_shortcode( 'otu_signup', 'otu_signup' );
