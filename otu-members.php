@@ -219,3 +219,22 @@ function register_otu_script() {
 	wp_register_script('script',  plugins_url( 'js/script.js', __FILE__ ), 'jquery');
         wp_enqueue_script('script');
 }
+/*
+ * shortcode to insert link to sign up for non-financials
+ */
+function otu_signup( $atts ){
+	 if ( is_user_logged_in() ) {
+             $level = pmpro_getMembershipLevelForUser();
+             $url = pmpro_url("checkout", "?level=1");
+             if ( $level ) {
+                 ?>
+                 Your membership is current. Memberships fall due on 1st July each year.
+                 To renew in advance, <a href="<?=$url?>/">click here</a>.
+             <?php } else { ?>
+                 <a href="<?=$url?>">Renew your membership now</a>.
+             <?php }
+         } else { ?>
+             <a href="<?=site_url()?>#login">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
+         <?php }
+}
+add_shortcode( 'otu_signup', 'otu_signup' );
