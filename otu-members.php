@@ -28,6 +28,12 @@ function add_otu_fields( $user )
                 Preferable to create a new user, then delete the old user and transfer their posts.
                 </td>
             </tr>
+            
+            <tr>
+                <th><label for="pmpro_class">Class</label></th>
+                <td><input type="text" name="pmpro_class" value="<?php echo str_replace ( "//", "/", esc_attr(get_the_author_meta( 'pmpro_class', $user->ID ))); ?>" class="regular-text" />
+                </td>
+            </tr>
 
             <tr>
                 <th><label for="pmpro_baddress1">Address 1</label></th>
@@ -40,8 +46,8 @@ function add_otu_fields( $user )
             </tr>
             
             <tr>
-                <th><label for="bpmpro_bcity">City</label></th>
-                <td><input type="text" name="bpmpro_bcity" value="<?php echo esc_attr(get_the_author_meta( 'bpmpro_bcity', $user->ID )); ?>" class="regular-text" /></td>
+                <th><label for="pmpro_bcity">City</label></th>
+                <td><input type="text" name="pmpro_bcity" value="<?php echo esc_attr(get_the_author_meta( 'pmpro_bcity', $user->ID )); ?>" class="regular-text" /></td>
             </tr>
             
             <tr>
@@ -90,23 +96,27 @@ function save_otu_fields( $user_id )
 {
     update_user_meta( $user_id,'pmpro_regimental_number', sanitize_text_field( $_POST['pmpro_regimental_number'] ) );
     
+    update_user_meta ( $user_id, 'pmpro_class', sanitize_text_field( str_replace("//", "/", $_POST['pmpro_class'] ) ) );
+    
     $user = get_userdata( $user_id );
     if( in_array('subscriber', $user->roles ) ) {
         // password is regimental number
-        $hash = wp_hash_password( $_POST['pmpro_regimental_number'] );
-        wp_update_user( array('ID'=>$user_id, 'user_pass'=>$hash, 'user_login' ) );
+        wp_set_password( $_POST['pmpro_regimental_number'], $user_id );
         // username is lastname_regimental number
         global $wpdb;
         $wpdb->update($wpdb->users, 
             array('user_login' => $_POST['last_name'] . "_" . $_POST['pmpro_regimental_number'] ),
             array( 'ID'=>$user_id ),
+            array( 'user_nicename'=>$_POST['first_name'] . " " . $_POST['last_name'] ),
             array( '%s'),
-            array( '%d' )
+            array( '%d' ),
+            array( '%s' )
         );
     }
+    update_user_meta( $user_id, 'pmpro_bemail', sanitize_text_field( $_POST['email'] ) );
     update_user_meta( $user_id,'pmpro_baddress1', sanitize_text_field( $_POST['pmpro_baddress1'] ) );
     update_user_meta( $user_id,'pmpro_baddress2', sanitize_text_field( $_POST['pmpro_baddress2'] ) );
-    update_user_meta( $user_id,'bpmpro_bcity', sanitize_text_field( $_POST['bpmpro_bcity'] ) );
+    update_user_meta( $user_id,'pmpro_bcity', sanitize_text_field( $_POST['pmpro_bcity'] ) );
     update_user_meta( $user_id,'pmpro_bstate', sanitize_text_field( $_POST['pmpro_bstate'] ) );
     update_user_meta( $user_id,'pmpro_bzipcode', sanitize_text_field( $_POST['pmpro_bzipcode'] ) );
     update_user_meta( $user_id,'pmpro_bphone', sanitize_text_field( $_POST['pmpro_bphone'] ) );
