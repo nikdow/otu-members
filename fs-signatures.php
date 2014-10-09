@@ -11,7 +11,7 @@ defined('ABSPATH') or die("No script kiddies please!");
 /*
  * Signatures - custom post type and facilities to support the big petition
  */
-//require_once plugin_dir_path ( __FILE__ ) . 'reminder.php';
+require_once plugin_dir_path ( __FILE__ ) . 'reminder.php';
 /*
  * Signatures AJAX calls
  */
