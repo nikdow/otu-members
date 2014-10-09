@@ -1,6 +1,13 @@
 <?php
-
+/*
+    function my_additional_schedules($schedules) {
+        // interval in seconds
+        $schedules['every2min'] = array('interval' => 2*60, 'display' => 'Every two minutes');
+        return $schedules;
+    }
+    add_filter('cron_schedules', 'my_additional_schedules'); */
 if ( ! wp_get_schedule ( 'otu_reminder' ) ) {
+// wp_clear_scheduled_hook('otu_reminder');
     $dt = new DateTime();
     $dt->setTimezone( new DateTimeZone ( get_option('timezone_string') ) );
     $str = $dt->format( 'Y-m-d 08:00:00' );
@@ -9,6 +16,9 @@ if ( ! wp_get_schedule ( 'otu_reminder' ) ) {
 }
 
 function otu_reminder() {
+    $dt = new DateTime();
+    add_option('otu_reminder_sent', $dt->format('Y-m-d H:i') );
+    echo 'otu_reminder ' . $dt->format('Y-m-d H:i' );
     global $wpdb;
     $query = "SELECT p.post_date as created, p.ID as ID, e.meta_value as email, s.meta_value as secret FROM $wpdb->posts p "
             . "LEFT JOIN $wpdb->postmeta m ON p.ID=m.post_id AND m.meta_key='reminder_sent' "
@@ -42,6 +52,7 @@ function otu_reminder() {
             update_post_meta($reminder->ID, 'reminder_sent', 1);
         }
     }
+    add_option( 'otu_reminder_count', $count );
 }
 
 add_action( 'admin_menu', 'reminder_menu' );
