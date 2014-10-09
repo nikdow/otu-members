@@ -237,15 +237,22 @@ function otu_signup( $atts ){
 	 if ( is_user_logged_in() ) {
              $level = pmpro_getMembershipLevelForUser();
              $url = pmpro_url("checkout", "?level=1");
-             if ( $level ) {
+             if ( $level->ID == 1 ) {
+                 $ed = $level->enddate;
+                 $edDT = new DateTime();
+                 $edDT->setTimestamp($ed);
                  ?>
-                 Your membership is current. Memberships fall due on 1st July each year.
+                 Your membership is paid to <?=$edDT->format('d/m/Y');?>. Memberships fall due on 1st July each year.
                  To renew in advance, <a href="<?=$url?>/">click here</a>.
+                 <?php
+            } else if ( $level->ID == 2 ){ 
+                ?>
+                 You are an honorary member, no subscription is payable.
              <?php } else { ?>
                  <a href="<?=$url?>">Renew your membership now</a>.
              <?php }
          } else { ?>
-             <a href="<?=site_url()?>/login">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
+             <a href="<?=site_url()?>/sign-in-to-otu-website/">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
          <?php }
     return ob_get_clean();
 }
