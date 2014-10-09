@@ -6,19 +6,19 @@
         return $schedules;
     }
     add_filter('cron_schedules', 'my_additional_schedules'); */
-if ( ! wp_get_schedule ( 'otu_reminder' ) ) {
-// wp_clear_scheduled_hook('otu_reminder');
+if ( ! wp_get_schedule ( 'fs_reminder' ) ) {
+// wp_clear_scheduled_hook('fs_reminder');
     $dt = new DateTime();
     $dt->setTimezone( new DateTimeZone ( get_option('timezone_string') ) );
     $str = $dt->format( 'Y-m-d 08:00:00' );
     $dt->createFromFormat('Y-m-d H:i:s', $str, new DateTimeZone( get_option('timezone_string' ) ) );
-    wp_schedule_event(current_time('timestamp'), 'daily', 'otu_reminder');
+    wp_schedule_event(current_time('timestamp'), 'daily', 'fs_reminder');
 }
 
-function otu_reminder() {
+function fs_reminder() {
     $dt = new DateTime();
-    add_option('otu_reminder_sent', $dt->format('Y-m-d H:i') );
-    echo 'otu_reminder ' . $dt->format('Y-m-d H:i' );
+    add_option('fs_reminder_sent', $dt->format('Y-m-d H:i') );
+    echo 'fs_reminder ' . $dt->format('Y-m-d H:i' );
     global $wpdb;
     $query = "SELECT p.post_date as created, p.ID as ID, e.meta_value as email, s.meta_value as secret FROM $wpdb->posts p "
             . "LEFT JOIN $wpdb->postmeta m ON p.ID=m.post_id AND m.meta_key='reminder_sent' "
@@ -52,7 +52,7 @@ function otu_reminder() {
             update_post_meta($reminder->ID, 'reminder_sent', 1);
         }
     }
-    add_option( 'otu_reminder_count', $count );
+    update_option( 'fs_reminder_count', $count );
 }
 
 add_action( 'admin_menu', 'reminder_menu' );
