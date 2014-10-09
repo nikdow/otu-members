@@ -201,7 +201,7 @@ class Otu_login extends WP_Widget {
                             <label for="user_pass">Reg No</label>
                             <input type="password" name="pwd" id="user_pass" class="input" size="20"/>
                         </P>
-                        <?php do_action( 'login_form' );?>
+                        <?php // do_action( 'login_form' );?>
                         <p class="login-remember">
                             <label>
                                 <input name="rememberme" type="checkbox" id="rememberme" value="forever">
@@ -245,7 +245,7 @@ function otu_signup( $atts ){
                  <a href="<?=$url?>">Renew your membership now</a>.
              <?php }
          } else { ?>
-             <a href="<?=site_url()?>#login">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
+             <a href="<?=site_url()?>/login">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
          <?php }
     return ob_get_clean();
 }
