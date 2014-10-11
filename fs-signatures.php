@@ -333,6 +333,7 @@ function fs_signature_meta() {
     $meta_referrer = $custom['fs_signature_referrer'][0];
     $meta_moderate = $custom['fs_signature_moderate'][0];
     $meta_newsletter = $custom['fs_signature_newsletter'][0];
+    $meta_reminder = $custom['reminder_sent'][0];
     
     echo '<input type="hidden" name="fs-signature-nonce" id="fs-signature-nonce" value="' .
         wp_create_nonce( 'fs-signature-nonce' ) . '" />';
@@ -370,6 +371,9 @@ function fs_signature_meta() {
             <li>
                 <label>&nbsp;</label>
                 <input type="radio" value="m" name="fs_signature_newsletter" <?=($meta_newsletter==="m" ? "checked" : "")?>/>More often: Keep me updated
+            </li>
+            <li><label>Reminder sent:</label>
+                <input type='checkbox' value='1' name='reminder_sent' <?=$meta_reminder==1 ? "CHECKED" : ""; ?> />
             </li>
             <li><label>Email</label><input name="fs_signature_email" value="<?php echo $meta_email; ?>" /></li>
             <li><label>Show name</label><input name="fs_signature_public" value="<?php echo $meta_public; ?>" /> (enter "y" or blank)</li>
@@ -412,6 +416,11 @@ function save_fs_signature(){
     update_post_meta($post->ID, "fs_signature_email", $_POST["fs_signature_email"]);
     update_post_meta($post->ID, "fs_signature_public", $_POST["fs_signature_public"]);
     update_post_meta($post->ID, "fs_signature_moderate", $_POST["fs_signature_moderate"]);
+    if(isset ( $_POST['reminder_sent'] ) ) {
+        update_post_meta ( $post->ID, "reminder_sent", 1 );
+    } else {
+        update_post_meta ( $post->ID, "reminder_sent", 0 );
+    }
 }
 
 add_filter('post_updated_messages', 'signature_updated_messages');

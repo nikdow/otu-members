@@ -5,35 +5,44 @@
         $schedules['every2min'] = array('interval' => 2*60, 'display' => 'Every two minutes');
         return $schedules;
     }
-    add_filter('cron_schedules', 'my_additional_schedules'); */
+    add_filter('cron_schedules', 'my_additional_schedules');  */
+    $dt = new DateTime();
+    $dt->setTimezone(new DateTimeZone( get_option('timezone_string') ) );
+    update_option('fs_reminder_runs', $dt->format('Y-m-d H:i') );
 if ( ! wp_get_schedule ( 'fs_reminder' ) ) {
-// wp_clear_scheduled_hook('fs_reminder');
+    update_option('fs_reminder_not_in_schedule', $dt->format('Y-m-d H:i') );
+    wp_clear_scheduled_hook('fs_reminder');
     $dt = new DateTime();
     $dt->setTimezone( new DateTimeZone ( get_option('timezone_string') ) );
     $str = $dt->format( 'Y-m-d 08:00:00' );
     $dt->createFromFormat('Y-m-d H:i:s', $str, new DateTimeZone( get_option('timezone_string' ) ) );
     wp_schedule_event(current_time('timestamp'), 'daily', 'fs_reminder');
+    add_action( 'fs_reminder', 'fs_reminder' );
 }
 
 function fs_reminder() {
     $dt = new DateTime();
-    add_option('fs_reminder_sent', $dt->format('Y-m-d H:i') );
-    echo 'fs_reminder ' . $dt->format('Y-m-d H:i' );
+    $dt->setTimezone(new DateTimeZone( get_option('timezone_string') ) );
+    update_option('fs_reminder_running', $dt->format('Y-m-d H:i') );
     global $wpdb;
     $query = "SELECT p.post_date as created, p.ID as ID, e.meta_value as email, s.meta_value as secret FROM $wpdb->posts p "
             . "LEFT JOIN $wpdb->postmeta m ON p.ID=m.post_id AND m.meta_key='reminder_sent' "
             . "LEFT JOIN $wpdb->postmeta e on p.ID=e.post_id AND e.meta_key='fs_signature_email' "
             . "LEFT JOIN $wpdb->postmeta s on p.ID=s.post_id AND s.meta_key='fs_signature_secret' "
             . "WHERE post_status=\"draft\" AND post_type=\"fs_signature\" AND m.meta_value IS NULL";
-    $reminders = $wpdb->get_rows ( $query, OBJECT );
+    $reminders = $wpdb->get_results ( $query, OBJECT );
     $count = 0;
-    $testing = true;
+    $drafts = 0;
+    $testing = false;
     $template = get_option( 'reminder-template' );
+    $sender_name = get_option('reminder-sender-name');
+    $sender_address = get_option('reminder-sender-address');
     foreach ( $reminders as $reminder ) {
-        $createdDT->createFromFormat('Y-m-d H:i:s', $reminder->created, new DateTimeZone( get_option('timezone_string') ) );
+        $createdDT = DateTime::createFromFormat('Y-m-d H:i:s', $reminder->created, new DateTimeZone( get_option('timezone_string') ) );
         $todayDT = new DateTime();
         $daysago = $createdDT->diff( $todayDT );
-        if ( $daysago > 3 ) {
+        $drafts++;
+        if ( $daysago->days > 3 ) {
             $content = str_replace( 
                     array( '{secret}',
                         ),
@@ -45,7 +54,7 @@ function fs_reminder() {
             $subject = "Can you confirm your email so we can show your support?";
             if ( $testing ) $subject .= " - " . $email;
             $headers = array();
-            $headers[] = 'From: "' . get_option('reminder-sender-name') . '" <' . get_option('reminder-sender-address') . '>';
+            $headers[] = 'From: "' . $sender_name . '" <' . $sender_address . '>';
             $headers[] = "Content-type: text/html";
             wp_mail( $email, $subject, $content, $headers );
             $count++;
@@ -53,6 +62,7 @@ function fs_reminder() {
         }
     }
     update_option( 'fs_reminder_count', $count );
+    update_option('fs_reminder_drafts', $drafts );
 }
 
 add_action( 'admin_menu', 'reminder_menu' );
