@@ -10,6 +10,8 @@
  */
 defined('ABSPATH') or die("No script kiddies please!");
 
+require_once plugin_dir_path ( __FILE__ ) . 'memberlist.php';
+
 add_action( 'show_user_profile', 'add_otu_fields' );
 add_action( 'edit_user_profile', 'add_otu_fields' );
 
