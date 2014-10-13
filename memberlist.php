@@ -1,71 +1,69 @@
 <?php
 
 /*
- * Shortcode for displaying members, paginated
+ * Shortcode for displaying items, paginated
  */
-add_action('init', 'register_memberlist_script');
-add_action('wp_footer', 'enqueue_memberlist_script');
-function register_memberlist_script() {
+add_action('init', 'register_itemlist_script');
+add_action('wp_footer', 'enqueue_itemlist_script');
+function register_itemlist_script() {
     wp_register_script( 'angular', "//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js", 'jquery' );
     wp_register_script( 'angular-animate', "//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular-animate.min.js", array( 'angular', 'jquery' ) );
-    wp_register_script('memberlist',  plugins_url( 'js/memberlist.js' , __FILE__ ), array('jquery', 'angular') );
+    wp_register_script('itemlist',  plugins_url( 'js/itemlist.js' , __FILE__ ), array('jquery', 'angular') );
+    wp_register_style('itemstyle', plugins_url('css/style.css', __FILE__ ) );
 }
-function enqueue_memberlist_script() {
-	global $add_memberlist_script;
+function enqueue_itemlist_script() {
+	global $add_itemlist_script;
 
-	if ( ! $add_memberlist_script )
+	if ( ! $add_itemlist_script )
 		return;
 
         wp_enqueue_script('angular');
         wp_enqueue_script('angular-animate');
-	wp_enqueue_script('memberlist');
+	wp_enqueue_script('itemlist');
+        wp_enqueue_style('itemstyle' );
 }
-function otu_memberlist (  ) {
-    global $add_memberlist_script;
-    $add_memberlist_script = true;
+
+add_shortcode('otu_itemlist', 'otu_itemlist' );
+
+function otu_itemlist (  ) {
+    global $add_itemlist_script;
+    $add_itemlist_script = true;
     
     $rows_per_page = 15;
-    $members = get_members( 0, $rows_per_page ); // first lot of sigs are loaded with the page
+    $items = get_items( 0, $rows_per_page ); // first lot of items are loaded with the page
     ob_start();
     ?>
-    <div class="row" ng-app="membersApp" ng-controller="membersCtrl">
+    <div class="row" ng-app="itemsApp" ng-controller="itemsCtrl">
         <script type="text/javascript">
-            _members = <?=json_encode($members)?>;
+            _items = <?=json_encode($items)?>;
             <?php
             global $wpdb;
-            $query = $wpdb->prepare('select count(*) from ' . $wpdb->users . ' where post_type="fs_signature" and post_status="private"', '' );
+            $query = $wpdb->prepare('SELECT COUNT(*) FROM ' . $wpdb->users . ' u LEFT JOIN ' . $wpdb->usermeta  . ' m ON m.user_id=u.ID LEFT JOIN ' . $wpdb->usermeta . ' d ON d.user_id=u.ID '
+                    . 'WHERE m.meta_key="' . $wpdb->base_prefix . 'user_level" AND m.meta_value=%d AND d.meta_key="pmpro_do_not_contact" and d.meta_value=0', 0 );
             $pages = $wpdb->get_col( $query );
             $pages = floor ( ($pages[0] + 0.9999) / $rows_per_page ) + 1;
             if(!$pages) $pages = 1;
             $data = array('pages'=>$pages);
+            $data['ajaxurl'] = admin_url( 'admin-ajax.php' );
             $data['rows_per_page'] = $rows_per_page;
             ?>
             _data = <?=json_encode($data)?>;
         </script>
-        <table id="members" border="0" width="90%" ng-cloak>
+        <table id="items" border="0" width="90%" ng-cloak>
             <tbody>
-                <tr><th width="120">Name</th><th width="100">Location</th><th>Date</th>
-                <?php if(current_user_can('moderate_comments')) { ?>
-                    <th>Admin</th>
-                <?php } ?>
-                <th>Comment</th></tr>
-                <tr ng-repeat="sig in sigs">
-                    <td>{{sig.name}}</td>
-                    <td>{{sig.location}}</td>
-                    <td>{{sig.date}}</td>
-                    <?php if(current_user_can('moderate_comments')) { ?>
-                    <td><a ng-hide="sig.moderate==='y' || sig.comment===''" ng-click="moderate(sig)" href="#">Approve</a><span ng-hide="sig.moderate==='y' || sig.comment===''"> | </span>
-                        <a ng-hide="sig.comment===''" href="<?=get_site_url();?>/wp-admin/post.php?post={{sig.id}}&action=edit">Edit</a></td>
-                    <?php } ?>
-                    <td class="fs-members-comments">{{sig.comment}}</td>
+                <tr><th width="120">Name</th><th width="100">Class</th><th>email</th><th>Home phone</th><th>Mobile phone</th><th>Business phone</th><th>&nbsp;</th></tr>
+                <tr ng-repeat="item in items">
+                    <td>{{item.name}}</td>
+                    <td>{{item.class}}</td>
+                    <td>{{item.email}}</td>
+                    <td>{{item.homephone}}</td>
+                    <td>{{item.mobilephone}}</td>
+                    <td>{{item.businessphone}}</td>
+                    <td><i class="fa fa-binoculars"></i></td>
                 </tr>
             </tbody>
         </table>
         <div id="ajax-loading" ng-class="{'farleft':!showLoading}"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif" ng-cloak></div>
-
-        <div>
-            <a href="<?=get_site_url();?>/sign-the-petition-to-reform-helmet-law/">Click here to sign this petition</a>
-        </div>
         <?php
         // pagination adapted from http://sgwordpress.com/teaches/how-to-add-wordpress-pagination-without-a-plugin/                    
         ?>
@@ -86,48 +84,37 @@ function otu_memberlist (  ) {
     <?php
     return ob_get_clean();
 }
-add_shortcode('otu_memberlist', 'otu_memberlist' );
-
 /* 
- * showing sigs to the public - called from ajax wrapper and also when loading page initially
+ * showing items to the public - called from ajax wrapper and also when loading page initially
  */
-function get_members( $first_item, $rows_per_page ){
+function get_items( $first_item, $rows_per_page ){
     global $wpdb;
-    $fs_country = fs_country();
     $query = $wpdb->prepare ( 
-        "SELECT p.post_title, p.post_excerpt, p.ID, pmc.meta_value AS country, pms.meta_value AS state, pmp.meta_value AS public, pmm.meta_value as moderate, pmr.meta_value as registered from " . 
-        $wpdb->posts . " p" .
-        " LEFT JOIN " . $wpdb->postmeta . " pmc ON pmc.post_id=p.ID AND pmc.meta_key='fs_signature_country'" . 
-        " LEFT JOIN " . $wpdb->postmeta . " pms ON pms.post_id=p.ID AND pms.meta_key='fs_signature_state'" .
-        " LEFT JOIN " . $wpdb->postmeta . " pmp ON pmp.post_id=p.ID AND pmp.meta_key='fs_signature_public'" .
-        " LEFT JOIN " . $wpdb->postmeta . " pmm ON pmm.post_id=p.ID AND pmm.meta_key='fs_signature_moderate'" .
-        " LEFT JOIN " . $wpdb->postmeta . " pmr ON pmr.post_id=p.ID AND pmr.meta_key='fs_signature_registered'" .
-        " WHERE p.post_type='fs_signature' AND p.`post_status`='private' ORDER BY registered DESC LIMIT %d,%d", $first_item, $rows_per_page 
+        "SELECT u.user_email as email, u.display_name as name, u.ID, umc.meta_value AS class, umh.meta_value AS homephone, umm.meta_value AS mobilephone, umb.meta_value as businessphone FROM " . 
+        $wpdb->users . " u" .
+        " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
+        " LEFT JOIN $wpdb->usermeta umc ON umc.user_id=u.ID AND umc.meta_key='pmpro_class'" . 
+        " LEFT JOIN $wpdb->usermeta umh ON umh.user_id=u.ID AND umh.meta_key='pmpro_bphone'" .
+        " LEFT JOIN $wpdb->usermeta umm ON umm.user_id=u.ID AND umm.meta_key='pmpro_bmobile'" .
+        " LEFT JOIN $wpdb->usermeta umb ON umb.user_id=u.ID AND umb.meta_key='pmpro_bbusiness'" .
+        " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key='pmpro_do_not_contact'" .
+        ' WHERE m.meta_value=0 AND d.meta_value=0' .
+        " LIMIT %d,%d",
+        $first_item, $rows_per_page
     );
     $rows = $wpdb->get_results ( $query );
-    $output = array();
-    foreach ( $rows as $row ) {
-        $output[] = array(
-            'name'=>$row->public==="y" ? $row->post_title : "withheld",
-            'location'=>$row->country==="AU" ? $row->state : $fs_country[$row->country],
-            'date'=> date( "j/n/y", strtotime( $row->registered ) ),
-            'moderate'=>$row->moderate,
-            'comment'=>$row->post_excerpt==="" ? "" : ( $row->moderate==="y" || current_user_can('moderate_comments') ? $row->post_excerpt : "comment awaiting moderation" ),
-            'id'=> current_user_can('moderate_comments') ? $row->ID : "",
-        );
-    }
-    return $output;
+    return $rows;
 }
 /*
  * AJAX wrapper to get sigs
  */
-add_action( 'wp_ajax_get_sigs', 'fs_get_sigs' );
-add_action( 'wp_ajax_nopriv_get_sigs', 'fs_get_sigs' );
+add_action( 'wp_ajax_CBDWeb_get_items', 'CBDWeb_get_items' );
+add_action( 'wp_ajax_nopriv_CBDWeb_get_items', 'CBDWeb_get_items' );
 
-function fs_get_sigs() {
+function CBDWeb_get_items() {
     $rows_per_page = $_POST['rows_per_page'];
     $page = $_POST['page'];
-    $first_sig = ( $page - 1 ) * $rows_per_page;
-    echo json_encode( get_sigs( $first_sig, $rows_per_page) );
+    $first_item = ( $page - 1 ) * $rows_per_page;
+    echo json_encode( get_items( $first_item, $rows_per_page) );
     die;
 }
