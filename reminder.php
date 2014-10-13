@@ -9,7 +9,7 @@
     $dt = new DateTime();
     $dt->setTimezone(new DateTimeZone( get_option('timezone_string') ) );
     update_option('fs_reminder_runs', $dt->format('Y-m-d H:i') );
-if ( ! wp_get_schedule ( 'fs_reminder' ) ) {
+// if ( ! wp_get_schedule ( 'fs_reminder' ) ) {
     update_option('fs_reminder_not_in_schedule', $dt->format('Y-m-d H:i') );
     wp_clear_scheduled_hook('fs_reminder');
     $dt = new DateTime();
@@ -18,7 +18,7 @@ if ( ! wp_get_schedule ( 'fs_reminder' ) ) {
     $dt->createFromFormat('Y-m-d H:i:s', $str, new DateTimeZone( get_option('timezone_string' ) ) );
     wp_schedule_event(current_time('timestamp'), 'daily', 'fs_reminder');
     add_action( 'fs_reminder', 'fs_reminder' );
-}
+//}
 
 function fs_reminder() {
     $dt = new DateTime();
