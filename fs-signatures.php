@@ -952,7 +952,7 @@ function fs_signature_signatures (  ) {
             global $wpdb;
             $query = $wpdb->prepare('select count(*) from ' . $wpdb->posts . ' where post_type="fs_signature" and post_status="private"', '' );
             $pages = $wpdb->get_col( $query );
-            $pages = floor ( ($pages[0] + 0.9999) / $rows_per_page ) + 1;
+            $pages = floor ( ($pages[0] - 0.9999) / $rows_per_page ) + 1;
             if(!$pages) $pages = 1;
             $data = array('pages'=>$pages);
             $data['rows_per_page'] = $rows_per_page;
