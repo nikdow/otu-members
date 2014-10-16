@@ -8,10 +8,10 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         $scope.gotoPage = function(page) {
            $scope.paged = page;
            $scope.showLoading = true;
-            var data = { 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
+            var data = { 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
             $.post($scope.data.ajaxurl, data, function( response ){
                var ajaxdata = $.parseJSON(response);
-               $scope.items = ajaxdata;
+               $scope.data.items = ajaxdata;
                $scope.dopagearray();
                $timeout ( function() {
                    $('#items').animate( { opacity: 1 } ) 
@@ -28,12 +28,31 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
             }
         };
         
-        $scope.items = _items; // pushed from the PHP
         $scope.data = _data;
         $scope.range = 4; // how many links to show in pagination
         $scope.showitems = ($scope.range * 2)+1;
         $scope.paged = 1; // page to display
         $scope.dopagearray();
 
+        $scope.show = function(item) {
+            $('.listitems').animate( { opacity: 0 } );
+            $('#item').animate( { opacity: 1 } );
+            $scope.item = item;
+        };
+        $scope.hide = function() {
+            $('.listitems').animate( { opacity: 1 } );
+            $('#item').animate( { opacity: 0 } );
+        };
+        $scope.setletter = function(letter) {
+            $scope.letter = letter;
+            $scope.gotoPage(1);
+        }
+        $scope.letter = '';
+        /*
+         * position detail panel
+         */
+        $('#item').css({position: "absolute"});
+        var pos = $('#items').offset();
+        $('#item').offset( pos );
     }
 ]);
