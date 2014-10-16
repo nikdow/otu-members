@@ -30,17 +30,9 @@ function otu_itemlist (  ) {
     $add_itemlist_script = true;
     
     $rows_per_page = 10;
-    $items = get_items( 0, $rows_per_page ); // first lot of items are loaded with the page
-    global $wpdb;
-    $query = $wpdb->prepare('SELECT COUNT(*) FROM ' . $wpdb->users . ' u LEFT JOIN ' . $wpdb->usermeta  . ' m ON m.user_id=u.ID LEFT JOIN ' . $wpdb->usermeta . ' d ON d.user_id=u.ID '
-            . 'WHERE m.meta_key="' . $wpdb->base_prefix . 'user_level" AND m.meta_value=%d AND d.meta_key="pmpro_do_not_contact" and d.meta_value=0', 0 );
-    $nitems = $wpdb->get_col( $query );
-    $pages = floor ( ($nitems[0] + 0.9999) / $rows_per_page );
-    if(!$pages) $pages = 1;
-    $data = array('pages'=>$pages);
+    $data = get_items( 0, $rows_per_page ); // first lot of items are loaded with the page
     $data['ajaxurl'] = admin_url( 'admin-ajax.php' );
     $data['rows_per_page'] = $rows_per_page;
-    $data['items'] = $items;
     ob_start();
     ?>
     <div class="row" ng-app="itemsApp" ng-controller="itemsCtrl">
@@ -48,11 +40,12 @@ function otu_itemlist (  ) {
             _data = <?=json_encode($data)?>;
         </script>
         <div id="letters">
-        <?php
-        foreach ( range("A", "Z") as $char) {
-            echo "<div class='letter' ng-class='{selected:(letter==\"" . $char . "\")}' ng-click='setletter(\"" . $char . "\")'>" . $char . "</div>";
-        }
-        ?>
+            <div class='letter wider' ng-class='{selected: (letter=="")}' ng-click='setletter("")'>ALL</div>
+            <?php
+            foreach ( range("A", "Z") as $char) {
+                echo "<div class='letter' ng-class='{selected:(letter==\"" . $char . "\")}' ng-click='setletter(\"" . $char . "\")'>" . $char . "</div>";
+            }
+            ?>
         </div>
         <table id="items" border="0" class="listitems" width="90%" ng-cloak>
             <tbody>
@@ -126,7 +119,7 @@ function otu_itemlist (  ) {
     return ob_get_clean();
 }
 /* 
- * showing items to the public - called from ajax wrapper and also when loading page initially
+ * showing items to members - called from ajax wrapper and also when loading page initially
  */
 function get_items( $first_item, $rows_per_page, $letter='' ){
     global $wpdb;
@@ -168,7 +161,28 @@ function get_items( $first_item, $rows_per_page, $letter='' ){
         );
         $items[] = $item;
     }
-    return $items;
+    $data = array ( 'items'=>$items );
+    /*
+     * total count
+     */
+    $params2 = array('0');
+    if( $letter != '' ) $params2[] = $letter;
+    $query = $wpdb->prepare ( 
+        "SELECT count(*) FROM " . 
+        $wpdb->users . " u" .
+        " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
+        " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key='pmpro_do_not_contact'" .
+        " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
+        " WHERE m.meta_value=%d AND d.meta_value=0" .
+        ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ),
+        $params2
+    );
+//    echo $query . "<br/>";
+    $nitems = $wpdb->get_col( $query );
+    $pages = floor ( ($nitems[0] - 0.9999) / $rows_per_page ) + 1;
+    if(!$pages) $pages = 1;
+    $data['pages'] = $pages;
+    return $data;
 }
 /*
  * AJAX wrapper to get sigs
@@ -181,6 +195,7 @@ function CBDWeb_get_items() {
     $page = $_POST['page'];
     $letter = $_POST['letter'];
     $first_item = ( $page - 1 ) * $rows_per_page;
-    echo json_encode( get_items( $first_item, $rows_per_page, $letter) );
+    $data = get_items( $first_item, $rows_per_page, $letter );
+    echo json_encode( $data );
     die;
 }

@@ -11,7 +11,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
             var data = { 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
             $.post($scope.data.ajaxurl, data, function( response ){
                var ajaxdata = $.parseJSON(response);
-               $scope.data.items = ajaxdata;
+               $.extend($scope.data, ajaxdata);
                $scope.dopagearray();
                $timeout ( function() {
                    $('#items').animate( { opacity: 1 } ) 
@@ -45,6 +45,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         };
         $scope.setletter = function(letter) {
             $scope.letter = letter;
+            $scope.hide();
             $scope.gotoPage(1);
         }
         $scope.letter = '';
