@@ -48,12 +48,13 @@ i.fa-times {
 }
 #item {
     opacity: 0;
+    display: none;
 }
-#letters {
+#letters, #membertypes {
     margin: 0 auto 5px auto;
     width: 920px;
 }
-.letter {
+.letter, .membertype {
     display: inline-block;
     border: grey 1px solid;
     width: 31px;
@@ -63,9 +64,15 @@ i.fa-times {
     background-color: #f1f3f3;
     border-radius: 8px;
 }
+.membertype {
+    width: auto;
+}
 .wider {
     width: 50px;
 }
 .selected {
     background-color: #ffcccc;
+}
+.hand {
+    cursor: pointer;
 }

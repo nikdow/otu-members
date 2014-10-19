@@ -33,12 +33,23 @@ function otu_itemlist (  ) {
     $data = get_items( 0, $rows_per_page ); // first lot of items are loaded with the page
     $data['ajaxurl'] = admin_url( 'admin-ajax.php' );
     $data['rows_per_page'] = $rows_per_page;
+    global $wpdb;
     ob_start();
     ?>
     <div class="row" ng-app="itemsApp" ng-controller="itemsCtrl">
         <script type="text/javascript">
             _data = <?=json_encode($data)?>;
         </script>
+        <div id='membertypes'>
+            <div class='membertype' ng-class='{selected: (membertype=="")}' ng-click='setmembertype("")'>ALL</div>
+            <?php
+            $query = "SELECT id, name FROM $wpdb->pmpro_membership_levels";
+            $membertypes = $wpdb->get_results ( $query, OBJECT );
+            foreach ( $membertypes as $membertype ) {
+                echo "<div class='membertype' ng-class='{selected: (membertype==\"" . $membertype->id . "\")}' ng-click='setmembertype(\"" . $membertype->id . "\")'>" . $membertype->name . "</div>";
+            }
+            ?>
+        </div>
         <div id="letters">
             <div class='letter wider' ng-class='{selected: (letter=="")}' ng-click='setletter("")'>ALL</div>
             <?php
@@ -47,21 +58,23 @@ function otu_itemlist (  ) {
             }
             ?>
         </div>
-        <table id="items" border="0" class="listitems" width="90%" ng-cloak>
-            <tbody>
-                <tr><th width="120">Name</th><th width="100">Class</th><th>email</th><th>Home phone</th><th>Mobile phone</th><th>Business phone</th><th>&nbsp;</th><th>&nbsp;</th></tr>
-                <tr ng-repeat="item in data.items">
-                    <td>{{item.name}}</td>
-                    <td>{{item.class}}</td>
-                    <td><a href="mailto:{{item.email}}" target="_blank">{{item.email}}</a></td>
-                    <td>{{item.homephone}}</td>
-                    <td>{{item.mobilephone}}</td>
-                    <td>{{item.businessphone}}</td>
-                    <td>{{(item.deceased=="1" ? "deceased" : "")}}</td>
-                    <td><i class="fa fa-folder-open-o pull-left" ng-click="show(item)"></i></td>
-                </tr>
-            </tbody>
-        </table>
+        <div id='items'>
+            <table border="0" class="listitems" width="90%" ng-cloak>
+                <tbody>
+                    <tr><th width="120">Name</th><th width="100">Class</th><th>email</th><th>Home phone</th><th>Mobile phone</th><th>Business phone</th><th>&nbsp;</th><th>&nbsp;</th></tr>
+                    <tr ng-repeat="item in data.items">
+                        <td><span class='hand' ng-click='show(item)'>{{item.name}}</span></td>
+                        <td>{{item.class}}</td>
+                        <td><a href="mailto:{{item.email}}" target="_blank">{{item.email}}</a></td>
+                        <td>{{item.homephone}}</td>
+                        <td>{{item.mobilephone}}</td>
+                        <td>{{item.businessphone}}</td>
+                        <td>{{(item.deceased=="1" ? "deceased" : "")}}</td>
+                        <td class='hand'><i class="fa fa-folder-open-o pull-left" ng-click="show(item)"></i></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         <div id="item">
             <table border="0" width="90%" ng-cloak>
                 <tbody>
@@ -121,14 +134,14 @@ function otu_itemlist (  ) {
 /* 
  * showing items to members - called from ajax wrapper and also when loading page initially
  */
-function get_items( $first_item, $rows_per_page, $letter='' ){
+function get_items( $first_item, $rows_per_page, $letter='', $membertype='' ){
     global $wpdb;
     $params = array();
     if( $letter != '' ) $params[] = $letter;
     $params[] = $first_item;
     $params[] = $rows_per_page;
     $query = $wpdb->prepare ( 
-        "SELECT u.user_email as email, u.display_name as name, u.ID FROM " . 
+        "SELECT SQL_CALC_FOUND_ROWS u.user_email as email, u.display_name as name, u.ID FROM " . 
         $wpdb->users . " u" .
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
         " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key='pmpro_do_not_contact'" .
@@ -139,8 +152,9 @@ function get_items( $first_item, $rows_per_page, $letter='' ){
         " LIMIT %d,%d",
         $params
     );
-//    echo $query . "<br/>";
+    //echo $query . "<br/>";
     $rows = $wpdb->get_results ( $query );
+    $nitems = $wpdb->get_var('SELECT FOUND_ROWS();');
     $items = array();
     foreach ( $rows as $row ) {
         $custom = get_user_meta( $row->ID );
@@ -164,7 +178,7 @@ function get_items( $first_item, $rows_per_page, $letter='' ){
     $data = array ( 'items'=>$items );
     /*
      * total count
-     */
+    
     $params2 = array('0');
     if( $letter != '' ) $params2[] = $letter;
     $query = $wpdb->prepare ( 
@@ -178,10 +192,11 @@ function get_items( $first_item, $rows_per_page, $letter='' ){
         $params2
     );
 //    echo $query . "<br/>";
-    $nitems = $wpdb->get_col( $query );
-    $pages = floor ( ($nitems[0] - 0.9999) / $rows_per_page ) + 1;
+    $nitems = $wpdb->get_col( $query ); */
+    $pages = floor ( ($nitems - 0.9999) / $rows_per_page ) + 1;
     if(!$pages) $pages = 1;
     $data['pages'] = $pages;
+    $data['nitems'] = $nitems;
     return $data;
 }
 /*
@@ -194,8 +209,9 @@ function CBDWeb_get_items() {
     $rows_per_page = $_POST['rows_per_page'];
     $page = $_POST['page'];
     $letter = $_POST['letter'];
+    $membertype = $_POST['membertype'];
     $first_item = ( $page - 1 ) * $rows_per_page;
-    $data = get_items( $first_item, $rows_per_page, $letter );
+    $data = get_items( $first_item, $rows_per_page, $letter, $membertype );
     echo json_encode( $data );
     die;
 }

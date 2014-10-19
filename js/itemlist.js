@@ -8,16 +8,17 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         $scope.gotoPage = function(page) {
            $scope.paged = page;
            $scope.showLoading = true;
-            var data = { 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
+            var data = { 'membertype':$scope.membertype, 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
             $.post($scope.data.ajaxurl, data, function( response ){
                var ajaxdata = $.parseJSON(response);
                $.extend($scope.data, ajaxdata);
                $scope.dopagearray();
                $timeout ( function() {
-                   $('#items').animate( { opacity: 1 } ) 
+                   $('#items').animate( { opacity: 1 } );
                });
                $scope.showLoading = false;
             });
+            $scope.hide();
             $('#items').animate( { opacity: 0 } );
         };
         
@@ -35,25 +36,36 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         $scope.dopagearray();
 
         $scope.show = function(item) {
-            $('.listitems').animate( { opacity: 0 } );
-            $('#item').animate( { opacity: 1 } );
+            $('.listitems').animate( { opacity: 0 }, { complete:$scope.displaynone } );
+            $('#item').animate( { opacity: 1 }, { complete: $scope.displayblock } );
             $scope.item = item;
         };
         $scope.hide = function() {
-            $('.listitems').animate( { opacity: 1 } );
-            $('#item').animate( { opacity: 0 } );
+            $('.listitems').animate( { opacity: 1 }, { complete: $scope.displayblock } );
+            $('#item').animate( { opacity: 0 }, { complete: $scope.displaynone } );
+        };
+        $scope.displaynone = function ( ) {
+            $(this).css({display: 'none'} );
+        };
+        $scope.displayblock = function () {
+            $(this).css({display: 'block'} );
+            if($(this).attr('id')=='item' ) {
+                $('#item').css({position: "absolute"});
+                $('#item').offset( $scope.pos );
+            }
         };
         $scope.setletter = function(letter) {
             $scope.letter = letter;
-            $scope.hide();
             $scope.gotoPage(1);
-        }
+        };
+        $scope.setmembertype = function(membertype) {
+            $scope.membertype = membertype;
+            $scope.gotoPage(1);
+        };
+        $scope.pos = $('#items').offset();
+        $scope.pos.left += 100;
+        $scope.pos.top +=50;
         $scope.letter = '';
-        /*
-         * position detail panel
-         */
-        $('#item').css({position: "absolute"});
-        var pos = $('#items').offset();
-        $('#item').offset( pos );
+        $scope.membertype = '';
     }
 ]);
