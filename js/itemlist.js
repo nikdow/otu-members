@@ -7,13 +7,13 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
 
         $scope.gotoPage = function(page) {
            $scope.paged = page;
-           if($scope.membertype.length===0) {
+           if($scope.membertype.length===0 || $scope.state.length===0 ) {
                $scope.data.items = []; // no membertypes requested, show blank
                $scope.data.pages = 0;
                $scope.dopagearray();
            } else {
                $scope.showLoading = true;
-                var data = { 'membertype':$scope.membertype, 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
+                var data = { 'state':$scope.state, 'membertype':$scope.membertype, 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
                 $.post($scope.data.ajaxurl, data, function( response ){
                    var ajaxdata = $.parseJSON(response);
                    $.extend($scope.data, ajaxdata);
@@ -79,7 +79,22 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         $scope.isMemberType = function(membertype) {
             return jQuery.inArray(membertype, $scope.membertype)>-1;
         };
+        $scope.togglestate = function(state) {
+            if($.inArray(state, $scope.state ) > -1 ) {
+                var index = $.inArray(state, $scope.state );
+                if(index != -1) {
+                    $scope.state.splice(index, 1 );
+                }
+            } else {
+                $scope.state.push(state);
+            }
+            $scope.gotoPage(1);
+        }
+        $scope.isState = function(state) {
+            return jQuery.inArray(state, $scope.state ) > -1;
+        }
         $scope.etc = function(item) {
+            if( ! item ) return "";
             var etcs = "";
             if(item.deceased==="1") {
                 etcs = "deceased";
@@ -97,6 +112,10 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         $scope.membertype = [''];
         $.each( $scope.data.membertypes, function(index, el) {
             $scope.membertype.push( el.id );
+        });
+        $scope.state = [''];
+        $.each ( $scope.data.states, function(index, el) {
+            $scope.state.push ( el );
         });
     }
 ]);

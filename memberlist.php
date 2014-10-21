@@ -40,12 +40,27 @@ function otu_itemlist (  ) {
     foreach($membertypes as $membertype ) {
         $data['membertypes'][] = array('id'=>$membertype->id, 'name'=>$membertype->name );
     }
+    $query = "SELECT IF(meta_value=\"Overseas\", \"ZZ\", meta_value) as mv FROM wp_my0ord_usermeta WHERE meta_key=\"pmpro_bstate\" and meta_value!=\"\" GROUP BY meta_value ORDER BY mv";
+    $results = $wpdb->get_results ( $query, OBJECT );
+    $states = array();
+    foreach($results as $result) {
+        $states[] = ($result->mv==="ZZ" ? "Overseas" : $result->mv);
+    }
+    $data['states'] = $states;
     ob_start();
     ?>
     <div class="row" ng-app="itemsApp" ng-controller="itemsCtrl">
         <script type="text/javascript">
             _data = <?=json_encode($data)?>;
         </script>
+        <div id='states'>
+            <div class='state' ng-class='{selected: isState("")}' ng-click='togglestate("")'>Unknown</div>
+            <?php
+            foreach ( $states as $state ) {
+                echo "<div class='state' ng-class='{selected: isState(\"" . $state . "\")}' ng-click='togglestate(\"" . $state . "\")'>" . $state . "</div>";
+            }
+            ?>
+        </div>
         <div id='membertypes'>
             <div class='membertype' ng-class='{selected: isMemberType("")}' ng-click='togglemembertype("")'>Unfinancial</div>
             <?php
@@ -138,7 +153,7 @@ function otu_itemlist (  ) {
 /* 
  * showing items to members - called from ajax wrapper and also when loading page initially
  */
-function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array() ){
+function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(), $states=array() ){
     global $wpdb;
     $params = array();
     if( $letter != '' ) $params[] = $letter;
@@ -150,6 +165,14 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         }
         $membertypestr = join(",", $membertypearr );
     }
+    if ( Count($states)>0 ) {
+        $statearr = array();
+        foreach ( $states as $state ) {
+            $statearr[] = "%s";
+            $params[] = $state;
+        }
+        $statestr = join(",", $statearr );
+    }
     $params[] = $first_item;
     $params[] = $rows_per_page;
     $query = $wpdb->prepare ( 
@@ -159,10 +182,12 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
         " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key='pmpro_do_not_contact'" .
         " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
+        ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
         " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID" .
         " WHERE m.meta_value=0 AND d.meta_value=0" .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
         ( Count($membertypes)==0 ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
+        ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
         " ORDER BY l.meta_value, name" .
         " LIMIT %d,%d",
         $params
@@ -208,8 +233,9 @@ function CBDWeb_get_items() {
     $page = $_POST['page'];
     $letter = $_POST['letter'];
     $membertype = $_POST['membertype'];
+    $state = $_POST['state'];
     $first_item = ( $page - 1 ) * $rows_per_page;
-    $data = get_items( $first_item, $rows_per_page, $letter, $membertype );
+    $data = get_items( $first_item, $rows_per_page, $letter, $membertype, $state );
     echo json_encode( $data );
     die;
 }
