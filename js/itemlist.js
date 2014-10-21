@@ -7,19 +7,25 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
 
         $scope.gotoPage = function(page) {
            $scope.paged = page;
-           $scope.showLoading = true;
-            var data = { 'membertype':$scope.membertype, 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
-            $.post($scope.data.ajaxurl, data, function( response ){
-               var ajaxdata = $.parseJSON(response);
-               $.extend($scope.data, ajaxdata);
+           if($scope.membertype.length===0) {
+               $scope.data.items = []; // no membertypes requested, show blank
+               $scope.data.pages = 0;
                $scope.dopagearray();
-               $timeout ( function() {
-                   $('#items').animate( { opacity: 1 } );
-               });
-               $scope.showLoading = false;
-            });
-            $scope.hide();
-            $('#items').animate( { opacity: 0 } );
+           } else {
+               $scope.showLoading = true;
+                var data = { 'membertype':$scope.membertype, 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
+                $.post($scope.data.ajaxurl, data, function( response ){
+                   var ajaxdata = $.parseJSON(response);
+                   $.extend($scope.data, ajaxdata);
+                   $scope.dopagearray();
+                   $timeout ( function() {
+                       $('#items').animate( { opacity: 1 } );
+                   });
+                   $scope.showLoading = false;
+                });
+                $scope.hide();
+                $('#items').animate( { opacity: 0 } );
+            }
         };
         
         $scope.dopagearray = function() {
@@ -58,14 +64,39 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
             $scope.letter = letter;
             $scope.gotoPage(1);
         };
-        $scope.setmembertype = function(membertype) {
-            $scope.membertype = membertype;
+        $scope.togglemembertype = function(membertype) {
+            if($.inArray(membertype, $scope.membertype ) > -1 ) {
+                var index = $.inArray(membertype, $scope.membertype);
+                if(index != -1)
+                {
+                  $scope.membertype.splice(index, 1);
+                }
+            } else {
+                $scope.membertype.push(membertype);
+            }
             $scope.gotoPage(1);
+        };
+        $scope.isMemberType = function(membertype) {
+            return jQuery.inArray(membertype, $scope.membertype)>-1;
+        };
+        $scope.etc = function(item) {
+            var etcs = "";
+            if(item.deceased==="1") {
+                etcs = "deceased";
+            } else {
+                $.each($scope.data.membertypes, function(index, el) {
+                    if(item.membershiplevel===el.id) etcs = el.name;
+                });
+            }
+            return etcs;
         };
         $scope.pos = $('#items').offset();
         $scope.pos.left += 100;
         $scope.pos.top +=50;
         $scope.letter = '';
-        $scope.membertype = '';
+        $scope.membertype = [''];
+        $.each( $scope.data.membertypes, function(index, el) {
+            $scope.membertype.push( el.id );
+        });
     }
 ]);

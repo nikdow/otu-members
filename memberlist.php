@@ -34,6 +34,12 @@ function otu_itemlist (  ) {
     $data['ajaxurl'] = admin_url( 'admin-ajax.php' );
     $data['rows_per_page'] = $rows_per_page;
     global $wpdb;
+    $query = "SELECT id, name FROM $wpdb->pmpro_membership_levels";
+    $membertypes = $wpdb->get_results ( $query, OBJECT );
+    $data['membertypes'] = array();
+    foreach($membertypes as $membertype ) {
+        $data['membertypes'][] = array('id'=>$membertype->id, 'name'=>$membertype->name );
+    }
     ob_start();
     ?>
     <div class="row" ng-app="itemsApp" ng-controller="itemsCtrl">
@@ -41,12 +47,10 @@ function otu_itemlist (  ) {
             _data = <?=json_encode($data)?>;
         </script>
         <div id='membertypes'>
-            <div class='membertype' ng-class='{selected: (membertype=="")}' ng-click='setmembertype("")'>ALL</div>
+            <div class='membertype' ng-class='{selected: isMemberType("")}' ng-click='togglemembertype("")'>Unfinancial</div>
             <?php
-            $query = "SELECT id, name FROM $wpdb->pmpro_membership_levels";
-            $membertypes = $wpdb->get_results ( $query, OBJECT );
             foreach ( $membertypes as $membertype ) {
-                echo "<div class='membertype' ng-class='{selected: (membertype==\"" . $membertype->id . "\")}' ng-click='setmembertype(\"" . $membertype->id . "\")'>" . $membertype->name . "</div>";
+                echo "<div class='membertype' ng-class='{selected: isMemberType(\"" . $membertype->id . "\")}' ng-click='togglemembertype(\"" . $membertype->id . "\")'>" . $membertype->name . "</div>";
             }
             ?>
         </div>
@@ -69,7 +73,7 @@ function otu_itemlist (  ) {
                         <td>{{item.homephone}}</td>
                         <td>{{item.mobilephone}}</td>
                         <td>{{item.businessphone}}</td>
-                        <td>{{(item.deceased=="1" ? "deceased" : "")}}</td>
+                        <td>{{etc(item)}}</td>
                         <td class='hand'><i class="fa fa-folder-open-o pull-left" ng-click="show(item)"></i></td>
                     </tr>
                 </tbody>
@@ -92,7 +96,7 @@ function otu_itemlist (  ) {
                         <td>{{item.homephone}}</td>
                         <td>{{item.mobilephone}}</td>
                         <td>{{item.businessphone}}</td>
-                        <td>{{(item.deceased=="1" ? "deceased" : "")}}</td>
+                        <td>{{etc(item)}}</td>
                     </tr>
                     <tr>
                         <td colspan="2">Address</td>
@@ -134,20 +138,31 @@ function otu_itemlist (  ) {
 /* 
  * showing items to members - called from ajax wrapper and also when loading page initially
  */
-function get_items( $first_item, $rows_per_page, $letter='', $membertype='' ){
+function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array() ){
     global $wpdb;
     $params = array();
     if( $letter != '' ) $params[] = $letter;
+    if ( Count($membertypes)>0) {
+        $membertypearr = [];
+        foreach ( $membertypes as $membertype ) {
+            $membertypearr[] = "%d";
+            $params[] = $membertype;
+        }
+        $membertypestr = join(",", $membertypearr );
+    }
     $params[] = $first_item;
     $params[] = $rows_per_page;
     $query = $wpdb->prepare ( 
-        "SELECT SQL_CALC_FOUND_ROWS u.user_email as email, u.display_name as name, u.ID FROM " . 
-        $wpdb->users . " u" .
+        "SELECT SQL_CALC_FOUND_ROWS" .
+        " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
+        " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
         " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key='pmpro_do_not_contact'" .
         " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
+        " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID" .
         " WHERE m.meta_value=0 AND d.meta_value=0" .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
+        ( Count($membertypes)==0 ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
         " ORDER BY l.meta_value, name" .
         " LIMIT %d,%d",
         $params
@@ -161,6 +176,7 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertype='' ){
         $item = array (
             'email'=>$row->email,
             'name'=>$row->name,
+            'membershiplevel'=>$row->ml,
             'class'=>$custom['pmpro_class'][0],
             'homephone'=>$custom['pmpro_bphone'][0],
             'mobilephone'=>$custom['pmpro_bmobile'][0],
@@ -176,27 +192,9 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertype='' ){
         $items[] = $item;
     }
     $data = array ( 'items'=>$items );
-    /*
-     * total count
-    
-    $params2 = array('0');
-    if( $letter != '' ) $params2[] = $letter;
-    $query = $wpdb->prepare ( 
-        "SELECT count(*) FROM " . 
-        $wpdb->users . " u" .
-        " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
-        " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key='pmpro_do_not_contact'" .
-        " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
-        " WHERE m.meta_value=%d AND d.meta_value=0" .
-        ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ),
-        $params2
-    );
-//    echo $query . "<br/>";
-    $nitems = $wpdb->get_col( $query ); */
     $pages = floor ( ($nitems - 0.9999) / $rows_per_page ) + 1;
     if(!$pages) $pages = 1;
     $data['pages'] = $pages;
-    $data['nitems'] = $nitems;
     return $data;
 }
 /*
