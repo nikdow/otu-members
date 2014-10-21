@@ -4,9 +4,15 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
     function( $scope, $timeout ) {
         
         $ = jQuery;
+        
+        $scope.requests = []; // track gotoPage requests
 
         $scope.gotoPage = function(page) {
            $scope.paged = page;
+           $.each( $scope.requests, function(index, el) { // get rid of outstanding requests before making a new one
+               el.abort();
+           });
+           $scope.requests = [];
            if($scope.membertype.length===0 || $scope.state.length===0 ) {
                $scope.data.items = []; // no membertypes requested, show blank
                $scope.data.pages = 0;
@@ -14,15 +20,17 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
            } else {
                $scope.showLoading = true;
                 var data = { 'state':$scope.state, 'membertype':$scope.membertype, 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
-                $.post($scope.data.ajaxurl, data, function( response ){
-                   var ajaxdata = $.parseJSON(response);
-                   $.extend($scope.data, ajaxdata);
-                   $scope.dopagearray();
-                   $timeout ( function() {
-                       $('#items').animate( { opacity: 1 } );
-                   });
-                   $scope.showLoading = false;
-                });
+                $scope.requests.push(
+                    $.post($scope.data.ajaxurl, data, function( response ){
+                       var ajaxdata = $.parseJSON(response);
+                       $.extend($scope.data, ajaxdata);
+                       $scope.dopagearray();
+                       $timeout ( function() {
+                           $('#items').animate( { opacity: 1 } );
+                       });
+                       $scope.showLoading = false;
+                    })
+                );
                 $scope.hide();
                 $('#items').animate( { opacity: 0 } );
             }
