@@ -143,7 +143,7 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
     $params = array();
     if( $letter != '' ) $params[] = $letter;
     if ( Count($membertypes)>0) {
-        $membertypearr = [];
+        $membertypearr = array();
         foreach ( $membertypes as $membertype ) {
             $membertypearr[] = "%d";
             $params[] = $membertype;
