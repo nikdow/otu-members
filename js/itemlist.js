@@ -12,7 +12,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
                if(sendmembertype.length === $('.membertype').length ) sendmembertype=[]; // prevents query needing to check this
                var sendstate = $.merge( [], $scope.state );
                if(sendstate.length === $('.state').length ) sendstate = [];
-               return { 'state':sendstate, 'membertype':sendmembertype, 'letter':$scope.letter };
+               return { 'state':sendstate, 'membertype':sendmembertype, 'letter':$scope.letter, 'clss':$scope.clss };
         };
 
         $scope.gotoPage = function(page) {
@@ -83,6 +83,10 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
             $scope.letter = letter;
             $scope.gotoPage(1);
         };
+        $scope.setclss = function ( clss ) {
+            $scope.clss = clss;
+            $scope.gotoPage(1);
+        }
         $scope.togglemembertype = function(membertype) {
             if($.inArray(membertype, $scope.membertype ) > -1 ) {
                 var index = $.inArray(membertype, $scope.membertype);
@@ -113,7 +117,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
             return jQuery.inArray(state, $scope.state ) > -1;
         }
         $scope.etc = function(item) {
-            if( ! item ) return "";
+            if( ! item ) return ""; // this can happen when no individual is selected in div#item
             var etcs = "";
             if(item.deceased==="1") {
                 etcs = "deceased";
@@ -149,6 +153,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         $scope.pos.left += 100;
         $scope.pos.top +=50;
         $scope.letter = '';
+        $scope.clss = '';
         $scope.membertype = [''];
         $.each( $scope.data.membertypes, function(index, el) {
             $scope.membertype.push( el.id );

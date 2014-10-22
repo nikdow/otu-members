@@ -50,14 +50,14 @@ i.fa-times {
     opacity: 0;
     display: none;
 }
-#letters, #membertypes, #states {
+#letters, #membertypes, #states, #clsses {
     margin: 0 auto 5px auto;
     width: 920px;
 }
-.letter, .membertype, .state, #download {
+.letter, .membertype, .state, .clss, #download {
     display: inline-block;
     border: grey 1px solid;
-    width: 31px;
+    width: auto;
     text-align: center;
     padding: 2px 5px;
     margin-right: 2px;
@@ -65,8 +65,8 @@ i.fa-times {
     border-radius: 8px;
     cursor: pointer;
 }
-.membertype, .state, #download {
-    width: auto;
+.letter {
+    width: 31px;    
 }
 .wider {
     width: 50px;

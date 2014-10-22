@@ -36,25 +36,69 @@ function otu_itemlist (  ) {
     $data['ajaxurl'] = admin_url( 'admin-ajax.php' );
     $data['rows_per_page'] = $rows_per_page;
     global $wpdb;
+    /*
+     * get membership levels
+     */
     $query = "SELECT id, name FROM $wpdb->pmpro_membership_levels";
     $membertypes = $wpdb->get_results ( $query, OBJECT );
     $data['membertypes'] = array();
     foreach($membertypes as $membertype ) {
         $data['membertypes'][] = array('id'=>$membertype->id, 'name'=>$membertype->name );
     }
-    $query = "SELECT IF(meta_value=\"Overseas\", \"ZZ\", meta_value) as mv FROM wp_my0ord_usermeta WHERE meta_key=\"pmpro_bstate\" and meta_value!=\"\" GROUP BY meta_value ORDER BY mv";
+    /*
+     * get States
+     */
+    $query = "SELECT IF(meta_value=\"Overseas\", \"ZZ\", meta_value) as mv FROM $wpdb->usermeta WHERE meta_key=\"pmpro_bstate\" and meta_value!=\"\" GROUP BY meta_value ORDER BY mv";
     $results = $wpdb->get_results ( $query, OBJECT );
     $states = array();
     foreach($results as $result) {
         $states[] = ($result->mv==="ZZ" ? "Overseas" : $result->mv);
     }
     $data['states'] = $states;
+    /*
+     * get classes
+     */
+    $query = "SELECT meta_value AS clss FROM $wpdb->usermeta WHERE meta_key=\"pmpro_class\" GROUP BY meta_value";
+    $results = $wpdb->get_results ( $query, OBJECT );
+    $classes = array();
+    foreach ( $results as $result ) {
+        $match = preg_match('/^([\d]+)\/([\d]+)$/', $result->clss, $matches );
+        if( $match ) {
+            $term = intval( $matches[1] );
+            $year = intval( $matches[2] );
+            $arr = array('term'=>$term, 'year'=>$year );
+            if( array_search ( $arr, $classes ) === false ) {
+                $classes[] = $arr;
+            }
+        }
+    }
+    function sortclass($a, $b) {
+        $va = $a['year'] * 1000 + $a['term'];
+        $vb = $b['year'] * 1000 + $b['term'];
+        if ( $va == $vb ) return 0;
+        return ( $va < $vb ) ? -1 : 1;
+    }
+    usort ( $classes, "sortclass" );
+    $clsses = array();
+    foreach ( $classes as $class ) {
+        $clsses[] =  $class['term'] . "/" . $class['year'];
+    }
+    $data['clsses'] = $clsses;
+    
     ob_start();
     ?>
     <div class="row" ng-app="itemsApp" ng-controller="itemsCtrl">
         <script type="text/javascript">
             _data = <?=json_encode($data)?>;
         </script>
+        <div id='clsses'>
+            <div class='clss wider' ng-class='{selected: (clss=="")}' ng-click='setclss("")'>All</div>
+            <?php
+            foreach ( $clsses as $clss ) {
+                echo "<div class='clss' ng-class='{selected: (clss==\"" . $clss . "\")}' ng-click='setclss(\"" . $clss . "\")'>" . $clss . "</div>";
+            }
+            ?>
+        </div>
         <div id='states'>
             <div class='state' ng-class='{selected: isState("")}' ng-click='togglestate("")'>Unknown</div>
             <?php
@@ -158,10 +202,15 @@ function otu_itemlist (  ) {
 /* 
  * showing items to members - called from ajax wrapper and also when loading page initially
  */
-function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(), $states=array() ){
+function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(), $states=array(), $clss='' ){
     global $wpdb;
     $params = array();
     if( $letter != '' ) $params[] = $letter;
+    if( $clss != '' ) {
+        preg_match('/^([\d]+)\/([\d]+)$/', $clss, $matches );
+        $params[] = intval ( $matches[1] );
+        $params[] = intval ( $matches[2] );
+    }
     if ( Count($membertypes)>0) {
         $membertypearr = array();
         foreach ( $membertypes as $membertype ) {
@@ -189,10 +238,12 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
         " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key='pmpro_do_not_contact'" .
         " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
+        ( $clss == '' ? "" : " LEFT JOIN $wpdb->usermeta c ON c.user_id=u.ID AND c.meta_key='pmpro_class'" ) .
         ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
         " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID" .
         " WHERE m.meta_value=0 AND d.meta_value=0" .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
+        ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
         ( Count($membertypes)==0 ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
         ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
         " ORDER BY l.meta_value, name" .
@@ -224,7 +275,7 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         );
         $items[] = $item;
     }
-    $data = array ( 'items'=>$items );
+    $data = array ( 'items'=>$items, 'query'=>$query );
     if ( $first_item >= 0 ) {
         $pages = floor ( ($nitems - 0.9999) / $rows_per_page ) + 1;
         if(!$pages) $pages = 1;
@@ -242,10 +293,11 @@ function CBDWeb_get_items() {
     $rows_per_page = $_POST['rows_per_page'];
     $page = $_POST['page'];
     $letter = $_POST['letter'];
+    $clss = $_POST['clss'];
     $membertype = isset( $_POST['membertype'] ) ? $_POST['membertype'] : array();
     $state = isset ( $_POST['state'] ) ? $_POST['state'] : array();
     $first_item = ( $page - 1 ) * $rows_per_page;
-    $data = get_items( $first_item, $rows_per_page, $letter, $membertype, $state );
+    $data = get_items( $first_item, $rows_per_page, $letter, $membertype, $state, $clss );
     echo json_encode( $data );
     die;
 }
@@ -255,10 +307,11 @@ add_action( 'wp_ajax_nopriv_CBDWeb_download_items', 'CBDWeb_download_items' );
 
 function CBDWeb_download_items() {
     $letter = $_GET['letter'];
+    $clss = $_GET['clss'];
     $membertype = isset( $_GET['membertype'] ) ? $_GET['membertype'] : array();
     $state = isset ( $_GET['state'] ) ? $_GET['state'] : array();
-    $data = get_items( -1, 0, $letter, $membertype, $state );
-    download_send_headers("OTU_members_" . $letter . date("Y-m-d") . ".csv");
+    $data = get_items( -1, 0, $letter, $membertype, $state, $clss );
+    download_send_headers("OTU_members_" . $letter . $clss . date("Y-m-d") . ".csv");
     echo array2csv( $data['items'] );
     die;
 }
