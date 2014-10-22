@@ -9,6 +9,7 @@ function register_itemlist_script() {
     wp_register_script( 'angular', "//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js", 'jquery' );
     wp_register_script( 'angular-animate', "//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular-animate.min.js", array( 'angular', 'jquery' ) );
     wp_register_script('itemlist',  plugins_url( 'js/itemlist.js' , __FILE__ ), array('jquery', 'angular') );
+    wp_register_script('fileDownload', plugins_url( 'js/fileDownload.js', __FILE__ ), array('jquery') );
     wp_register_style('itemstyle', plugins_url('css/style.css', __FILE__ ) );
 }
 function enqueue_itemlist_script() {
@@ -20,6 +21,7 @@ function enqueue_itemlist_script() {
         wp_enqueue_script('angular');
         wp_enqueue_script('angular-animate');
 	wp_enqueue_script('itemlist');
+        wp_enqueue_script('fileDownload');
         wp_enqueue_style('itemstyle' );
 }
 
@@ -129,6 +131,9 @@ function otu_itemlist (  ) {
                 </tbody>
             </table>
         </div>
+        <div id='download' ng-click='download()' ng-hide='membertype.length===0 || state.length===0'>
+            download
+        </div>
         <div id="ajax-loading" ng-class="{'farleft':!showLoading}"><img src="<?php echo get_site_url();?>/wp-includes/js/thickbox/loadingAnimation.gif" ng-cloak></div>
         <?php
         // pagination adapted from http://sgwordpress.com/teaches/how-to-add-wordpress-pagination-without-a-plugin/                    
@@ -173,9 +178,11 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         }
         $statestr = join(",", $statearr );
     }
-    $params[] = $first_item;
-    $params[] = $rows_per_page;
-    $query = $wpdb->prepare ( 
+    if ( $first_item >= 0 ) { // if negative, get all rows
+        $params[] = $first_item;
+        $params[] = $rows_per_page;
+    }
+    $query = 
         "SELECT SQL_CALC_FOUND_ROWS" .
         " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
         " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
@@ -189,9 +196,10 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         ( Count($membertypes)==0 ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
         ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
         " ORDER BY l.meta_value, name" .
-        " LIMIT %d,%d",
-        $params
-    );
+        ( $first_item >= 0 ? " LIMIT %d,%d" : "" );
+    if ( Count ( $params ) > 0 ) {
+        $query = $wpdb->prepare ( $query, $params );
+    }
     //echo $query . "<br/>";
     $rows = $wpdb->get_results ( $query );
     $nitems = $wpdb->get_var('SELECT FOUND_ROWS();');
@@ -217,13 +225,15 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         $items[] = $item;
     }
     $data = array ( 'items'=>$items );
-    $pages = floor ( ($nitems - 0.9999) / $rows_per_page ) + 1;
-    if(!$pages) $pages = 1;
-    $data['pages'] = $pages;
+    if ( $first_item >= 0 ) {
+        $pages = floor ( ($nitems - 0.9999) / $rows_per_page ) + 1;
+        if(!$pages) $pages = 1;
+        $data['pages'] = $pages;
+    }
     return $data;
 }
 /*
- * AJAX wrapper to get sigs
+ * AJAX wrapper to get items
  */
 add_action( 'wp_ajax_CBDWeb_get_items', 'CBDWeb_get_items' );
 add_action( 'wp_ajax_nopriv_CBDWeb_get_items', 'CBDWeb_get_items' );
@@ -232,10 +242,55 @@ function CBDWeb_get_items() {
     $rows_per_page = $_POST['rows_per_page'];
     $page = $_POST['page'];
     $letter = $_POST['letter'];
-    $membertype = $_POST['membertype'];
-    $state = $_POST['state'];
+    $membertype = isset( $_POST['membertype'] ) ? $_POST['membertype'] : array();
+    $state = isset ( $_POST['state'] ) ? $_POST['state'] : array();
     $first_item = ( $page - 1 ) * $rows_per_page;
     $data = get_items( $first_item, $rows_per_page, $letter, $membertype, $state );
     echo json_encode( $data );
     die;
+}
+
+add_action( 'wp_ajax_CBDWeb_download_items', 'CBDWeb_download_items' );
+add_action( 'wp_ajax_nopriv_CBDWeb_download_items', 'CBDWeb_download_items' );
+
+function CBDWeb_download_items() {
+    $letter = $_GET['letter'];
+    $membertype = isset( $_GET['membertype'] ) ? $_GET['membertype'] : array();
+    $state = isset ( $_GET['state'] ) ? $_GET['state'] : array();
+    $data = get_items( -1, 0, $letter, $membertype, $state );
+    download_send_headers("OTU_members_" . $letter . date("Y-m-d") . ".csv");
+    echo array2csv( $data['items'] );
+    die;
+}
+
+function array2csv(array &$array)
+{
+   if (count($array) == 0) {
+     return null;
+   }
+   ob_start();
+   $df = fopen("php://output", 'w');
+   fputcsv($df, array_keys(reset($array)));
+   foreach ($array as $row) {
+      fputcsv($df, $row);
+   }
+   fclose($df);
+   return ob_get_clean();
+}
+function download_send_headers($filename) {
+    // disable caching
+    $now = gmdate("D, d M Y H:i:s");
+    header("Expires: Tue, 03 Jul 2001 06:00:00 GMT");
+    header("Cache-Control: max-age=0, no-cache, must-revalidate, proxy-revalidate");
+    header("Last-Modified: {$now} GMT");
+
+    // force download  
+    header("Content-Type: application/force-download");
+    header("Content-Type: application/octet-stream");
+    header("Content-Type: application/download");
+
+    // disposition / encoding on response body
+    header("Content-Disposition: attachment;filename={$filename}");
+    header("Content-Transfer-Encoding: binary");
+    header("Set-Cookie: fileDownload=true; path=/");
 }

@@ -6,6 +6,14 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         $ = jQuery;
         
         $scope.requests = []; // track gotoPage requests
+        
+        $scope.ajaxparams = function() {
+            var sendmembertype = $.merge( [], $scope.membertype );
+               if(sendmembertype.length === $('.membertype').length ) sendmembertype=[]; // prevents query needing to check this
+               var sendstate = $.merge( [], $scope.state );
+               if(sendstate.length === $('.state').length ) sendstate = [];
+               return { 'state':sendstate, 'membertype':sendmembertype, 'letter':$scope.letter };
+        };
 
         $scope.gotoPage = function(page) {
            $scope.paged = page;
@@ -18,8 +26,11 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
                $scope.data.pages = 0;
                $scope.dopagearray();
            } else {
-               $scope.showLoading = true;
-                var data = { 'state':$scope.state, 'membertype':$scope.membertype, 'letter':$scope.letter, 'page':page, 'rows_per_page':$scope.data.rows_per_page, 'action':'CBDWeb_get_items' };
+                $scope.showLoading = true;
+                var data = $scope.ajaxparams();
+                data.page = page;
+                data.rows_per_page = $scope.data.rows_per_page;
+                data.action = 'CBDWeb_get_items';
                 $scope.requests.push(
                     $.post($scope.data.ajaxurl, data, function( response ){
                        var ajaxdata = $.parseJSON(response);
@@ -112,6 +123,27 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
                 });
             }
             return etcs;
+        };
+        $scope.download = function() {
+            $scope.showLoading = true;
+            var data = $scope.ajaxparams();
+            data.action = 'CBDWeb_download_items';
+            $.fileDownload( $scope.data.ajaxurl + "?" + $.param(data), {
+                failCallback: function ( responseHtml ) {
+                    $scope.showLoading = false;
+                    $scope.$apply();
+                    alert( responseHtml );
+                },
+                successCallback: function () {
+                    $scope.showLoading = false;
+                    $scope.$apply();
+                }
+            })
+                .fail( function( responseHtml ) {
+                })
+                .success( function() {
+                    alert ( 'file downloaded ' );
+                });
         };
         $scope.pos = $('#items').offset();
         $scope.pos.left += 100;

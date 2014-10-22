@@ -54,7 +54,7 @@ i.fa-times {
     margin: 0 auto 5px auto;
     width: 920px;
 }
-.letter, .membertype, .state {
+.letter, .membertype, .state, #download {
     display: inline-block;
     border: grey 1px solid;
     width: 31px;
@@ -63,8 +63,9 @@ i.fa-times {
     margin-right: 2px;
     background-color: #f1f3f3;
     border-radius: 8px;
+    cursor: pointer;
 }
-.membertype, .state {
+.membertype, .state, #download {
     width: auto;
 }
 .wider {
