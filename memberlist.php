@@ -1,5 +1,4 @@
 <?php
-
 /*
  * Shortcode for displaying items, paginated
  */
@@ -135,7 +134,13 @@ function otu_itemlist (  ) {
                         <td>{{item.mobilephone}}</td>
                         <td>{{item.businessphone}}</td>
                         <td>{{etc(item)}}</td>
-                        <td class='hand'><i class="fa fa-folder-open-o pull-left" ng-click="show(item)"></i></td>
+                        <?php
+                        if ( current_user_can ( 'create_users' ) ) { ?>
+                            <td><a href="<?=admin_url( 'user-edit.php' );?>?user_id={{item.ID}}"><i class="fa fa-folder-open-o pull-left"></i></a></td>                            
+                            <?php
+                        } else { ?>
+                            <td class='hand'><i class="fa fa-folder-open-o pull-left" ng-click="show(item)"></i></td>
+                        <?php } ?>
                     </tr>
                 </tbody>
             </table>
