@@ -247,12 +247,11 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
         " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
-        " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key='pmpro_do_not_contact'" .
         " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
         ( $clss == '' ? "" : " LEFT JOIN $wpdb->usermeta c ON c.user_id=u.ID AND c.meta_key='pmpro_class'" ) .
         ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
         " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID" .
-        " WHERE m.meta_value=0 AND d.meta_value=0" .
+        " WHERE m.meta_value=0" .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
         ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
         ( Count($membertypes)==0 ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
@@ -269,20 +268,20 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
     foreach ( $rows as $row ) {
         $custom = get_user_meta( $row->ID );
         $item = array (
-            'email'=>$row->email,
+            'email'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $row->email,
             'name'=>$row->name,
             'membershiplevel'=>$row->ml,
             'class'=>$custom['pmpro_class'][0],
-            'homephone'=>$custom['pmpro_bphone'][0],
-            'mobilephone'=>$custom['pmpro_bmobile'][0],
-            'businessphone'=>$custom['pmpro_bbusiness'][0],
+            'homephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bphone'][0],
+            'mobilephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bmobile'][0],
+            'businessphone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bbusiness'][0],
             'deceased'=>$custom['pmpro_deceased'][0],
             'ID'=>$row->ID,
-            'address1'=>$custom['pmpro_baddress1'][0],
-            'address2'=>isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'][0] : "",
-            'state'=>$custom['pmpro_bstate'][0],
-            'city'=>$custom['pmpro_bcity'][0],
-            'postcode'=>$custom['pmpro_bzipcode'][0],
+            'address1'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_baddress1'][0],
+            'address2'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'][0] : "",
+            'state'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bstate'][0],
+            'city'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bcity'][0],
+            'postcode'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bzipcode'][0],
         );
         $items[] = $item;
     }
