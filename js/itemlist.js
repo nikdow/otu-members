@@ -24,7 +24,9 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
            if($scope.membertype.length===0 || $scope.state.length===0 ) {
                $scope.data.items = []; // no membertypes requested, show blank
                $scope.data.pages = 0;
+               $scope.showLoading = false;
                $scope.dopagearray();
+               $('#items').animate( { opacity: 1 } );
            } else {
                 $scope.showLoading = true;
                 var data = $scope.ajaxparams();
