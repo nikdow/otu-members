@@ -323,14 +323,6 @@ function CBDWeb_download_items() {
     download_send_headers("OTU_members_" . $letter . $clss . date("Y-m-d") . ".csv");
     download_items( -1, 0, $letter, $membertype, $state, $clss );
     die;
-//    echo array2csv( $data['items'] );
-    $df = fopen("php://output", 'w');
-    fputcsv( $df, array_keys( reset( $data['items'] ) ) );
-    foreach ( $data['items'] as $row ) {
-       fputcsv( $df, $row );
-    }
-//    fclose($df);
-    die;
 }
 /*
  * download_items is based on function get_items but outputs CSV file.
@@ -388,7 +380,7 @@ function download_items( $first_item, $rows_per_page, $letter='', $membertypes=a
     $rows = $wpdb->get_results ( $query );
     $nitems = $wpdb->get_var('SELECT FOUND_ROWS();');
     $items = array();
-    $first = true;
+    $count = 0;
     $df = fopen("php://output", 'w');
     foreach ( $rows as $row ) {
         $custom = get_user_meta( $row->ID );
@@ -408,12 +400,13 @@ function download_items( $first_item, $rows_per_page, $letter='', $membertypes=a
             'city'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bcity'][0],
             'postcode'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bzipcode'][0],
         );
-        if( $first ) { // header row
+        if( ! $count ) { // header row
             fputcsv( $df, array_keys( $item ) );
-            $first = false;
         }
+        $count++;
         fputcsv( $df, $item );
     }
+    fclose($df);
 }
 
 function array2csv(array &$array)
