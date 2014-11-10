@@ -265,6 +265,8 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
     $rows = $wpdb->get_results ( $query );
     $nitems = $wpdb->get_var('SELECT FOUND_ROWS();');
     $items = array();
+        $data = array ( 'items'=>$items, 'query'=>$query );
+        return $data;
     foreach ( $rows as $row ) {
         $custom = get_user_meta( $row->ID );
         $item = array (
