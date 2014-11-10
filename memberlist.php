@@ -320,8 +320,8 @@ function CBDWeb_download_items() {
     $clss = $_GET['clss'];
     $membertype = isset( $_GET['membertype'] ) ? $_GET['membertype'] : array();
     $state = isset ( $_GET['state'] ) ? $_GET['state'] : array();
-    $data = get_items( -1, 0, $letter, $membertype, $state, $clss );
     download_send_headers("OTU_members_" . $letter . $clss . date("Y-m-d") . ".csv");
+    download_items( -1, 0, $letter, $membertype, $state, $clss );
     die;
 //    echo array2csv( $data['items'] );
     $df = fopen("php://output", 'w');
@@ -331,6 +331,89 @@ function CBDWeb_download_items() {
     }
 //    fclose($df);
     die;
+}
+/*
+ * download_items is based on function get_items but outputs CSV file.
+ * Do it line-by-line to avoid running out of memory
+ */
+function download_items( $first_item, $rows_per_page, $letter='', $membertypes=array(), $states=array(), $clss='' ){
+    global $wpdb;
+    $params = array();
+    if( $letter != '' ) $params[] = $letter;
+    if( $clss != '' ) {
+        preg_match('/^([\d]+)\/([\d]+)$/', $clss, $matches );
+        $params[] = intval ( $matches[1] );
+        $params[] = intval ( $matches[2] );
+    }
+    if ( Count($membertypes)>0) {
+        $membertypearr = array();
+        foreach ( $membertypes as $membertype ) {
+            $membertypearr[] = "%d";
+            $params[] = $membertype;
+        }
+        $membertypestr = join(",", $membertypearr );
+    }
+    if ( Count($states)>0 ) {
+        $statearr = array();
+        foreach ( $states as $state ) {
+            $statearr[] = "%s";
+            $params[] = $state;
+        }
+        $statestr = join(",", $statearr );
+    }
+    if ( $first_item >= 0 ) { // if negative, get all rows
+        $params[] = $first_item;
+        $params[] = $rows_per_page;
+    }
+    $query = 
+        "SELECT SQL_CALC_FOUND_ROWS" .
+        " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
+        " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
+        " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
+        " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
+        ( $clss == '' ? "" : " LEFT JOIN $wpdb->usermeta c ON c.user_id=u.ID AND c.meta_key='pmpro_class'" ) .
+        ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
+        " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID" .
+        " WHERE m.meta_value=0" .
+        ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
+        ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
+        ( Count($membertypes)==0 ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
+        ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
+        " ORDER BY l.meta_value, name" .
+        ( $first_item >= 0 ? " LIMIT %d,%d" : "" );
+    if ( Count ( $params ) > 0 ) {
+        $query = $wpdb->prepare ( $query, $params );
+    }
+    //echo $query . "<br/>";
+    $rows = $wpdb->get_results ( $query );
+    $nitems = $wpdb->get_var('SELECT FOUND_ROWS();');
+    $items = array();
+    $first = true;
+    $df = fopen("php://output", 'w');
+    foreach ( $rows as $row ) {
+        $custom = get_user_meta( $row->ID );
+        $item = array (
+            'email'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $row->email,
+            'name'=>$row->name,
+            'membershiplevel'=>$row->ml,
+            'class'=>$custom['pmpro_class'][0],
+            'homephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bphone'][0],
+            'mobilephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bmobile'][0],
+            'businessphone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bbusiness'][0],
+            'deceased'=>$custom['pmpro_deceased'][0],
+            'ID'=>$row->ID,
+            'address1'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_baddress1'][0],
+            'address2'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'][0] : "",
+            'state'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bstate'][0],
+            'city'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bcity'][0],
+            'postcode'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bzipcode'][0],
+        );
+        if( $first ) { // header row
+            fputcsv( $df, array_keys( $item ) );
+            $first = false;
+        }
+        fputcsv( $df, $item );
+    }
 }
 
 function array2csv(array &$array)
