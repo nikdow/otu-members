@@ -322,6 +322,7 @@ function CBDWeb_download_items() {
     $state = isset ( $_GET['state'] ) ? $_GET['state'] : array();
     $data = get_items( -1, 0, $letter, $membertype, $state, $clss );
     download_send_headers("OTU_members_" . $letter . $clss . date("Y-m-d") . ".csv");
+    die;
 //    echo array2csv( $data['items'] );
     $df = fopen("php://output", 'w');
     fputcsv( $df, array_keys( reset( $data['items'] ) ) );
