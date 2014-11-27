@@ -77,3 +77,18 @@ i.fa-times {
 .hand {
     cursor: pointer;
 }
+/*
+* memberlist dialog
+*/
+.ngdialog-content table {
+    width: 100%;
+    margin-top: 20px;
+}
+.ngdialog-content>img {
+    float: left;
+    margin-bottom: 20px;
+}
+.ngdialog-content>h2 {
+    float: right;
+    margin-right: 100px;
+}

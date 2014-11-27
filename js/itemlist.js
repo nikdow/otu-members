@@ -1,7 +1,7 @@
-var itemsApp = angular.module('itemsApp', ['ngAnimate']);
+var itemsApp = angular.module( 'itemsApp', ['ngAnimate', 'ngDialog'] );
 
-itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
-    function( $scope, $timeout ) {
+itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog', 
+    function( $scope, $timeout, ngDialog ) {
         
         $ = jQuery;
         
@@ -63,9 +63,14 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout',
         $scope.dopagearray();
 
         $scope.show = function(item) {
-            $('.listitems').animate( { opacity: 0 }, { complete:$scope.displaynone } );
-            $('#item').animate( { opacity: 1 }, { complete: $scope.displayblock } );
+//            $('.listitems').animate( { opacity: 0 }, { complete:$scope.displaynone } );
+//            $('#item').animate( { opacity: 1 }, { complete: $scope.displayblock } );
             $scope.item = item;
+            ngDialog.open( {
+                template: 'templateId',
+                className: 'ngdialog-theme-default',
+                scope: $scope
+            });
         };
         $scope.hide = function() {
             $('.listitems').animate( { opacity: 1 }, { complete: $scope.displayblock } );

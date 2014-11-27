@@ -10,6 +10,9 @@ function register_itemlist_script() {
     wp_register_script('itemlist',  plugins_url( 'js/itemlist.js' , __FILE__ ), array('jquery', 'angular') );
     wp_register_script('fileDownload', plugins_url( 'js/fileDownload.js', __FILE__ ), array('jquery') );
     wp_register_style('itemstyle', plugins_url('css/style.css', __FILE__ ) );
+    wp_register_script( 'dialog', plugins_url( 'js/ngDialog.js', __FILE__ ), array('jquery', 'angular' ) );
+    wp_register_style('dialogstyle', plugins_url( 'css/ngDialog.css', __FILE__ ) );
+    wp_register_style('dialogdefault', plugins_url( 'css/ngDialog-theme-default.css', __FILE__ ) );
 }
 function enqueue_itemlist_script() {
 	global $add_itemlist_script;
@@ -22,6 +25,9 @@ function enqueue_itemlist_script() {
 	wp_enqueue_script('itemlist');
         wp_enqueue_script('fileDownload');
         wp_enqueue_style('itemstyle' );
+        wp_enqueue_script('dialog');
+        wp_enqueue_style('dialogstyle');
+        wp_enqueue_style( 'dialogdefault' );
 }
 
 add_shortcode('otu_itemlist', 'otu_itemlist' );
@@ -90,6 +96,37 @@ function otu_itemlist (  ) {
         <script type="text/javascript">
             _data = <?=json_encode($data)?>;
         </script>
+        <script type="text/ng-template" id="templateId">
+            <img src="{{item.avatar}}" border=0/>
+            <h2>{{item.name}}</h2>
+            <table border="0" width="100%">
+                <tbody>
+                    <tr>
+                        <th width="100">Class</th><th>email</th><th>Home phone</th><th>Mobile phone</th><th>Business phone</th><th>&nbsp;</th>
+                    </tr>
+                    <tr>
+                        <td>{{item.class}}</td>
+                        <td><a href="mailto:{{item.email}}" target="_blank">{{item.email}}</a></td>
+                        <td>{{item.homephone}}</td>
+                        <td>{{item.mobilephone}}</td>
+                        <td>{{item.businessphone}}</td>
+                        <td>{{etc(item)}}</td>
+                    </tr>
+                    <tr>
+                        <th colspan="2">Address</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th colspan="3">Postcode</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2">{{item.address1}}, {{item.address2}}</td>
+                        <td>{{item.city}}</td>
+                        <td>{{item.state}}</td>
+                        <td colspan="3">{{item.postcode}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </script>
         <div id='clsses'>
             <div class='clss wider' ng-class='{selected: (clss=="")}' ng-click='setclss("")'>All</div>
             <?php
@@ -151,41 +188,7 @@ function otu_itemlist (  ) {
                 </tbody>
             </table>
         </div>
-        <div id="item">
-            <table border="0" width="90%" ng-cloak>
-                <tbody>
-                    <tr>
-                        <td colspan="6">&nbsp;</td>
-                        <td class="alignright"><i class="fa fa-times" ng-click="hide()"></i></td>
-                    </tr>
-                    <tr>
-                        <td>Name</td><td width="100">Class</td><td>email</td><td>Home phone</td><td>Mobile phone</td><td>Business phone</td><td>&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td>{{item.name}}</td>
-                        <td>{{item.class}}</td>
-                        <td><a href="mailto:{{item.email}}" target="_blank">{{item.email}}</a></td>
-                        <td>{{item.homephone}}</td>
-                        <td>{{item.mobilephone}}</td>
-                        <td>{{item.businessphone}}</td>
-                        <td>{{etc(item)}}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">Address</td>
-                        <td>City</td>
-                        <td>State</td>
-                        <td colspan="3">Postcode</td>
-                    </tr>
-                    <tr>
-                        <td>{{item.address1}}</td>
-                        <td>{{item.address2}}</td>
-                        <td>{{item.city}}</td>
-                        <td>{{item.state}}</td>
-                        <td colspan="3">{{item.postcode}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+       
         <div id='download' ng-click='download()' ng-hide='membertype.length===0 || state.length===0'>
             download
         </div>
@@ -213,6 +216,10 @@ function otu_itemlist (  ) {
 /* 
  * showing items to members - called from ajax wrapper and also when loading page initially
  */
+function get_avatar_url($get_avatar){
+    preg_match("/src='(.*?)'/i", $get_avatar, $matches);
+    return $matches[1];
+}
 function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(), $states=array(), $clss='' ){
     global $wpdb;
     $params = array();
@@ -282,6 +289,7 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
             'state'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bstate'][0],
             'city'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bcity'][0],
             'postcode'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bzipcode'][0],
+            'avatar'=>get_avatar_url ( get_avatar( $row->ID ) )
         );
         $items[] = $item;
     }
