@@ -217,7 +217,7 @@ function otu_itemlist (  ) {
  * showing items to members - called from ajax wrapper and also when loading page initially
  */
 function get_avatar_url($get_avatar){
-    preg_match("/src='(.*?)'/i", $get_avatar, $matches);
+    preg_match("/src=['\"](.*?)['\"]/i", $get_avatar, $matches);
     return $matches[1];
 }
 function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(), $states=array(), $clss='' ){
