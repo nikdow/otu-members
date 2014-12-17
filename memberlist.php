@@ -53,7 +53,9 @@ function otu_itemlist (  ) {
     /*
      * get States
      */
-    $query = "SELECT IF(meta_value=\"Overseas\", \"ZZ\", meta_value) as mv FROM $wpdb->usermeta WHERE meta_key=\"pmpro_bstate\" and meta_value!=\"\" GROUP BY meta_value ORDER BY mv";
+    $query = "SELECT IF(u.meta_value=\"Overseas\", \"ZZ\", u.meta_value) as mv FROM $wpdb->usermeta u " .
+            "LEFT JOIN $wpdb->usermeta m ON m.user_id=u.user_id AND m.meta_key=\"wp_my0ord_user_level\" " .
+            "WHERE u.meta_key=\"pmpro_bstate\" AND u.meta_value!=\"\" AND m.meta_value=0 GROUP BY u.meta_value ORDER BY mv";
     $results = $wpdb->get_results ( $query, OBJECT );
     $states = array();
     foreach($results as $result) {

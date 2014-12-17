@@ -44,7 +44,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
                        $scope.showLoading = false;
                     })
                 );
-                $scope.hide();
+//                $scope.hide();
                 $('#items').animate( { opacity: 0 } );
             }
         };
@@ -72,10 +72,10 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
                 scope: $scope
             });
         };
-        $scope.hide = function() {
-            $('.listitems').animate( { opacity: 1 }, { complete: $scope.displayblock } );
-            $('#item').animate( { opacity: 0 }, { complete: $scope.displaynone } );
-        };
+//        $scope.hide = function() {
+//            $('.listitems').animate( { opacity: 1 }, { complete: $scope.displayblock } );
+//            $('#item').animate( { opacity: 0 }, { complete: $scope.displaynone } );
+//        };
         $scope.displaynone = function ( ) {
             $(this).css({display: 'none'} );
         };
