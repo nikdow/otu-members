@@ -36,6 +36,90 @@ function add_otu_fields( $user )
                 <td><input type="text" name="pmpro_class" value="<?php echo str_replace ( "//", "/", esc_attr(get_the_author_meta( 'pmpro_class', $user->ID ))); ?>" class="regular-text" />
                 </td>
             </tr>
+            
+            <tr>
+                <th><label for="middlename">Middlename</label></th>
+                <td><input type="text" name="middlename" value="<?php echo esc_attr(get_the_author_meta( 'middlename', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="corps">Corps</label></th>
+                <td><input type="text" name="corps" value="<?php echo esc_attr(get_the_author_meta( 'corps', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+            
+            <tr>
+                <th><label for="graduateno">Graduate No</label></th>
+                <td><input type="text" name="graduateno" value="<?php echo esc_attr(get_the_author_meta( 'graduateno', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="directing">Directing</label></th>
+                <td><input type="text" name="directing" value="<?php echo esc_attr(get_the_author_meta( 'directing', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="vietnam">Vietnam</label></th>
+                <td><input type="text" name="vietnam" value="<?php echo esc_attr(get_the_author_meta( 'vietnam', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="industry">Industry</label></th>
+                <td><input type="text" name="industry" value="<?php echo esc_attr(get_the_author_meta( 'industry', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+            
+            <tr>
+                <th><label for="company">Company</label></th>
+                <td><input type="text" name="company" value="<?php echo esc_attr(get_the_author_meta( 'company', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="occupation">Occupation</label></th>
+                <td><input type="text" name="occupation" value="<?php echo esc_attr(get_the_author_meta( 'occupation', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+            
+            <tr>
+                <th><label for="interests">Interests</label></th>
+                <td><input type="text" name="interests" value="<?php echo esc_attr(get_the_author_meta( 'interests', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+            
+            <tr>
+                <th><label for="otuposition">OTU position</label></th>
+                <td><input type="text" name="otuposition" value="<?php echo esc_attr(get_the_author_meta( 'otuposition', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="partner">Partner</label></th>
+                <td><input type="text" name="partner" value="<?php echo esc_attr(get_the_author_meta( 'partner', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="awards">Awards</label></th>
+                <td><input type="text" name="awards" value="<?php echo esc_attr(get_the_author_meta( 'awards', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="comments">Comments</label></th>
+                <td><input type="text" name="comments" value="<?php echo esc_attr(get_the_author_meta( 'comments', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="website">Website</label></th>
+                <td><input type="text" name="website" value="<?php echo esc_attr(get_the_author_meta( 'website', $user->ID )); ?>" class="regular-text" />
+                </td>
+            </tr>
 
             <tr>
                 <th><label for="pmpro_baddress1">Address 1</label></th>
@@ -99,6 +183,21 @@ function save_otu_fields( $user_id )
     update_user_meta( $user_id,'pmpro_regimental_number', sanitize_text_field( $_POST['pmpro_regimental_number'] ) );
     
     update_user_meta ( $user_id, 'pmpro_class', sanitize_text_field( str_replace("//", "/", $_POST['pmpro_class'] ) ) );
+    
+    update_user_meta ( $user_id, 'middlename', sanitize_text_field( $_POST['middlename'] ) );
+    update_user_meta ( $user_id, 'corps', sanitize_text_field( $_POST['corps'] ) );
+    update_user_meta ( $user_id, 'graduateno', sanitize_text_field( $_POST['graduateno'] ) );
+    update_user_meta ( $user_id, 'directing', sanitize_text_field( $_POST['directing'] ) );
+    update_user_meta ( $user_id, 'vietnam', sanitize_text_field( $_POST['vietnam'] ) );
+    update_user_meta ( $user_id, 'industry', sanitize_text_field( $_POST['industry'] ) );
+    update_user_meta ( $user_id, 'company', sanitize_text_field( $_POST['company'] ) );
+    update_user_meta ( $user_id, 'occupation', sanitize_text_field( $_POST['occupation'] ) );
+    update_user_meta ( $user_id, 'interests', sanitize_text_field( $_POST['interests'] ) );
+    update_user_meta ( $user_id, 'otuposition', sanitize_text_field( $_POST['otuposition'] ) );
+    update_user_meta ( $user_id, 'partner', sanitize_text_field( $_POST['partner'] ) );
+    update_user_meta ( $user_id, 'awards', sanitize_text_field( $_POST['awards'] ) );
+    update_user_meta ( $user_id, 'comments', sanitize_text_field( $_POST['comments'] ) );
+    update_user_meta ( $user_id, 'website', sanitize_text_field( $_POST['website'] ) );
     
     $user = get_userdata( $user_id );
     if( in_array('subscriber', $user->roles ) ) {
