@@ -23,14 +23,25 @@ function add_otu_fields( $user )
         <table class="form-table">
             <tr>
                 <th><label for="pmpro_regimental_number">Regimental Number</label></th>
-                <td><input type="text" name="pmpro_regimental_number" value="<?php echo esc_attr(get_the_author_meta( 'pmpro_regimental_number', $user->ID )); ?>" class="regular-text" />
+                <td><input type="text" name="pmpro_regimental_number" DISABLED value="<?php echo esc_attr(get_the_author_meta( 'pmpro_regimental_number', $user->ID )); ?>" class="regular-text" />
                 <br/>
                 Warning - changing the regimental number or surname of an existing user will break things.
-                <br/>
-                Preferable to create a new user, then delete the old user and transfer their posts.
                 </td>
             </tr>
             
+            <tr>
+                <th>Change surname or Regimental Number</th>
+                <td>
+                    <b>Change either or both to copy this user's data into a new user record</b><br/>
+                    Regimental no: <input type="text" name="new_regimental_number" value="<?php echo esc_attr(get_the_author_meta( 'pmpro_regimental_number', $user->ID )); ?>" class="regular-text" />
+                    Surname: <input type="text" name="new_last_name" value="<?php echo esc_attr(get_the_author_meta( 'last_name', $user->ID )); ?>" class="regular-text" />
+                    <br/>
+                    <button type="button" onClick="copyUser('<?=$user->ID?>')">Make copy</button>
+                    <br/>
+                    <span id='copyUserOutput'></span>
+                </td>
+            </tr>
+                        
             <tr>
                 <th><label for="pmpro_class">Class</label></th>
                 <td><input type="text" name="pmpro_class" value="<?php echo str_replace ( "//", "/", esc_attr(get_the_author_meta( 'pmpro_class', $user->ID ))); ?>" class="regular-text" />
@@ -173,6 +184,105 @@ function add_otu_fields( $user )
            
         </table>
     <?php
+}
+
+add_action( 'wp_ajax_CBDWeb_copyUser', 'CBDWeb_copyUser' );
+
+function CBDWeb_copyUser() {
+    try {
+        $user_id = $_POST['id'];
+        $new_regimental_number = $_POST['new_regimental_number'];
+        $new_last_name = $_POST['new_last_name'];
+        $user = get_user_by( 'id', $user_id );
+        $data = array();
+        if( $user->last_name === $new_last_name && $user->get( 'pmpro_regimental_number' ) === $new_regimental_number ) {
+            $data['message'] = "You haven't changed the regimental number nor the surname - no action taken.";
+            echo json_encode( $data );
+            die;
+        }
+        $username = $new_last_name . "_" . $new_regimental_number;
+        $password = $new_regimental_number;
+        $email = $user->user_email;
+        $userdata = array(
+            'user_login' => $username,
+            'user_pass' => $password,
+//            'user_email' => $email,
+            'user_nicename' => $username,
+            'display_name' => $user->first_name . ' ' . $new_last_name,
+            'nickname' => $user->first_name . ' ' . $new_last_name,
+            'first_name' => $user->first_name,
+            'last_name' => $new_last_name,
+            'show_admin_bar_front' => 'false',
+            'show_admin_bar_admin' => 'false',
+        );
+        $new_user_id = wp_insert_user( $userdata );
+        
+        if ( is_wp_error($new_user_id) ) {
+            echo json_encode ( array ( 'message' => $new_user_id->get_error_message() ) );
+            die;
+        }
+
+        $user_meta = get_user_meta ( $user_id );
+        
+        global $wpdb;
+        $query = "SELECT * FROM $wpdb->pmpro_memberships_users WHERE user_id=$user_id";
+        $old_member = $wpdb->get_row( $query );
+        if ( $old_member ) {
+            $enddate = $old_member->enddate;
+            $wpdb->update ( $wpdb->pmpro_memberships_users, 
+                    array( 'user_id' => $new_user_id, 'status'=>'active', 'enddate' => $enddate ), 
+                    array ( 'user_id' => $user_id ) );
+        }
+        
+        wp_delete_user( $user_id, $new_user_id ); // assign posts to new user id
+        
+        $meta_keys = array(
+            'pmpro_bfirstname',
+            'pmpro_blastname',
+            'pmpro_regimental_number',
+            'pmpro_class',
+            'pmpro_baddress1',
+            'pmpro_bstate',
+            'pmpro_bcity',
+            'pmpro_bzipcode',
+            'pmpro_bphone',
+            'pmpro_bmobile',
+            'pmpro_bbusiness',
+            'pmpro_group',
+            'pmpro_deceased',
+            'pmpro_bemail',
+            'pmpro_do_not_contact',
+            'googleauthenticator_hidefromuser',
+            'wpua_has_gravatar',
+            'pmpro_bmiddlename',
+            'pmpro_corps',
+            'corps',
+            'middlename',
+            'wp_my0ord_user_level',            
+        );
+        
+//        echo json_encode ( array ( 'user_meta' => $user_meta, 'message' => 'diagnostic' ) );
+//        die;
+        
+        foreach ( $meta_keys as $key ) {
+            if(isset($user_meta[ $key ] ) ) {
+                update_user_meta( $new_user_id, $key, $user_meta[ $key ][0] );
+            }
+        }
+        
+        $new_user_id = wp_update_user ( array ( 'ID' => $new_user_id, 'user_email'=> $email ) );
+        if ( is_wp_error ( $new_user_id ) ) {
+            echo json_encode ( array ( 'message' => $new_user_id->get_error_message() ) );
+            die;
+        }
+        
+        echo json_encode ( array ( 'message' => 'Created new user.  The old user has been deleted and their posts copied over.', 
+            'id'=>$new_user_id,
+            ) );
+        die;
+    } catch (Exception $e) {
+        echo json_encode( array ( 'message' => $e->getMessage() ) );
+    }
 }
 
 add_action( 'personal_options_update', 'save_otu_fields' );
@@ -329,6 +439,7 @@ add_action('init', 'register_otu_script' );
 function register_otu_script() {
 	wp_register_script('script',  plugins_url( 'js/script.js', __FILE__ ), 'jquery');
         wp_enqueue_script('script');
+        
 }
 /*
  * shortcode to insert link to sign up for non-financials
