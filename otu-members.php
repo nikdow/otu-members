@@ -238,8 +238,6 @@ function CBDWeb_copyUser() {
         
         $meta_keys = array(
             'pmpro_bfirstname',
-            'pmpro_blastname',
-            'pmpro_regimental_number',
             'pmpro_class',
             'pmpro_baddress1',
             'pmpro_bstate',
@@ -269,6 +267,9 @@ function CBDWeb_copyUser() {
                 update_user_meta( $new_user_id, $key, $user_meta[ $key ][0] );
             }
         }
+        
+        update_user_meta( $new_user_id, 'pmpro_regimental_number', $new_regimental_number );
+        update_user_meta( $new_user_id, 'pmpro_blastname', $new_last_name );
         
         $new_user_id = wp_update_user ( array ( 'ID' => $new_user_id, 'user_email'=> $email ) );
         if ( is_wp_error ( $new_user_id ) ) {
