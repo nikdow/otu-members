@@ -280,7 +280,7 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
             'email'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $row->email,
             'name'=>$row->name,
             'membershiplevel'=>$row->ml,
-            'class'=>$custom['pmpro_class'][0],
+            'class'=>( isset($custom['pmpro_class']) ? $custom['pmpro_class'][0] : ""),
             'homephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bphone'][0],
             'mobilephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bmobile'][0],
             'businessphone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bbusiness'][0],
