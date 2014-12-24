@@ -36,9 +36,9 @@ function add_otu_fields( $user )
                     Regimental no: <input type="text" name="new_regimental_number" value="<?php echo esc_attr(get_the_author_meta( 'pmpro_regimental_number', $user->ID )); ?>" class="regular-text" />
                     Surname: <input type="text" name="new_last_name" value="<?php echo esc_attr(get_the_author_meta( 'last_name', $user->ID )); ?>" class="regular-text" />
                     <br/>
-                    <button type="button" onClick="copyUser('<?=$user->ID?>')">Make copy</button>
+                    <button type="button" onClick="copyUser('<?=$user->ID?>')">Change</button>
                     <br/>
-                    <span id='copyUserOutput'></span>
+                    <span id='copyUserOutput'>This works by making a copy of the user, then deletes the old user while transferring any posts.</span>
                 </td>
             </tr>
                         
