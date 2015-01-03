@@ -38,7 +38,7 @@ function otu_itemlist (  ) {
     
     $rows_per_page = 10;
     $data = get_items( 0, $rows_per_page ); // first lot of items are loaded with the page
-    $data['ajaxurl'] = admin_url( 'admin-ajax.php' );
+    $data['ajaxurl'] = site_url();
     $data['rows_per_page'] = $rows_per_page;
     global $wpdb;
     /*
@@ -128,6 +128,7 @@ function otu_itemlist (  ) {
                     </tr>
                 </tbody>
             </table>
+            <div id="gallery"></div>
         </script>
         <div id='clsses'>
             <div class='clss wider' ng-class='{selected: (clss=="")}' ng-click='setclss("")'>All</div>
@@ -254,7 +255,7 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
     $query = 
         "SELECT SQL_CALC_FOUND_ROWS" .
         " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
-        " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
+        " u.user_email as email, u.display_name as name, u.user_login as login, u.ID FROM " . $wpdb->users . " u" .
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
         " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
         ( $clss == '' ? "" : " LEFT JOIN $wpdb->usermeta c ON c.user_id=u.ID AND c.meta_key='pmpro_class'" ) .
@@ -291,7 +292,8 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
             'state'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bstate'][0],
             'city'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bcity'][0],
             'postcode'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bzipcode'][0],
-            'avatar'=>get_avatar_url ( get_avatar( $row->ID ) )
+            'avatar'=>get_avatar_url ( get_avatar( $row->ID ) ),
+            'gallery'=> do_shortcode ( '[wppa type="album" album="#owner,' . $row->login . ',$Members"][/wppa]' ),
         );
         $items[] = $item;
     }
@@ -449,4 +451,18 @@ function download_send_headers($filename) {
     header("Content-Disposition: attachment;filename={$filename}");
     header("Content-Transfer-Encoding: binary");
     header("Set-Cookie: fileDownload=true; path=/");
+}
+
+
+add_action( 'init', function() { 
+  ps_register_shortcode_ajax( 'CBDWeb_get_items', 'CBDWeb_get_items' ); 
+} );
+
+function ps_register_shortcode_ajax( $callable, $action ) {
+
+  if ( empty( $_POST['action'] ) || $_POST['action'] != $action )
+    return;
+  
+  wppa_load_theme();
+  call_user_func( $callable );
 }

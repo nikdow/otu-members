@@ -34,7 +34,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
                 data.rows_per_page = $scope.data.rows_per_page;
                 data.action = 'CBDWeb_get_items';
                 $scope.requests.push(
-                    $.post($scope.data.ajaxurl, data, function( response ){
+                    $.post($scope.data.ajaxurl + "/otu-members", data, function( response ){
                        var ajaxdata = $.parseJSON(response);
                        $.extend($scope.data, ajaxdata);
                        $scope.dopagearray();
@@ -62,15 +62,17 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
         $scope.paged = 1; // page to display
         $scope.dopagearray();
 
-        $scope.show = function(item) {
-//            $('.listitems').animate( { opacity: 0 }, { complete:$scope.displaynone } );
-//            $('#item').animate( { opacity: 1 }, { complete: $scope.displayblock } );
+        $scope.show = function(item, $) {
+            $ = jQuery;
             $scope.item = item;
+            $scope.$on('ngDialog.opened', function(e, $dialog) {
+                $('#gallery').html(item.gallery);
+            })
             ngDialog.open( {
                 template: 'templateId',
                 className: 'ngdialog-theme-default',
                 scope: $scope
-            });
+            });            
         };
 //        $scope.hide = function() {
 //            $('.listitems').animate( { opacity: 1 }, { complete: $scope.displayblock } );
