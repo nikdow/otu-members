@@ -162,7 +162,6 @@ function otu_itemlist (  ) {
             }
             ?>
         </div>
-        <?=print_r(wp_upload_dir())?>
         <div id='items'>
             <div ng-show="membertype.length===0">
                 <h2>You have not selected any Member-types above</h2>
