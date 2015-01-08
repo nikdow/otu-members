@@ -94,6 +94,7 @@ function otu_itemlist (  ) {
     
     ob_start();
     ?>
+    get_old_avatars();
     <div class="row" ng-app="itemsApp" ng-controller="itemsCtrl">
         <script type="text/javascript">
             _data = <?=json_encode($data)?>;
