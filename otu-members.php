@@ -292,7 +292,8 @@ add_action( 'edit_user_profile_update', 'save_otu_fields' );
 
 function save_otu_fields( $user_id )
 {
-    update_user_meta( $user_id,'pmpro_regimental_number', sanitize_text_field( $_POST['pmpro_regimental_number'] ) );
+    if( $_POST['pmpro_regimental_number'] ) 
+        update_user_meta( $user_id,'pmpro_regimental_number', sanitize_text_field( $_POST['pmpro_regimental_number'] ) );
     
     update_user_meta ( $user_id, 'pmpro_class', sanitize_text_field( str_replace("//", "/", $_POST['pmpro_class'] ) ) );
     
