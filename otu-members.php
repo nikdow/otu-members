@@ -314,7 +314,8 @@ function save_otu_fields( $user_id )
     $user = get_userdata( $user_id );
     if( in_array('subscriber', $user->roles ) ) {
         // password is regimental number
-        wp_set_password( $_POST['pmpro_regimental_number'], $user_id );
+        if( $_POST['pmpro_regimental_number']) // it's disabled on edit
+            wp_set_password( $_POST['pmpro_regimental_number'], $user_id );
         // username is lastname_regimental number
         global $wpdb;
         $wpdb->update($wpdb->users, 
