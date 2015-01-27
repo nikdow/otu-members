@@ -93,7 +93,6 @@ function otu_itemlist (  ) {
     $data['clsses'] = $clsses;
     
     ob_start();
-//    get_old_avatars();
     ?>
     <div class="row" ng-app="itemsApp" ng-controller="itemsCtrl">
         <script type="text/javascript">
@@ -168,7 +167,7 @@ function otu_itemlist (  ) {
                 <h2>You have not selected any Member-types above</h2>
             </div>
             <div ng-show="state.length===0">
-                <h2>You have not selected any localities above</h2>
+                <h2>You have not selected any locations above</h2>
             </div>
             <table border="0" class="listitems" width="90%" ng-cloak>
                 <tbody>

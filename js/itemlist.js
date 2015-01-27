@@ -78,16 +78,16 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
 //            $('.listitems').animate( { opacity: 1 }, { complete: $scope.displayblock } );
 //            $('#item').animate( { opacity: 0 }, { complete: $scope.displaynone } );
 //        };
-        $scope.displaynone = function ( ) {
-            $(this).css({display: 'none'} );
-        };
-        $scope.displayblock = function () {
-            $(this).css({display: 'block'} );
-            if($(this).attr('id')=='item' ) {
-                $('#item').css({position: "absolute"});
-                $('#item').offset( $scope.pos );
-            }
-        };
+//        $scope.displaynone = function ( ) {
+//            $(this).css({display: 'none'} );
+//        };
+//        $scope.displayblock = function () {
+//            $(this).css({display: 'block'} );
+//           if($(this).attr('id')=='item' ) {
+//                $('#item').css({position: "absolute"});
+//                $('#item').offset( $scope.pos );
+//            }
+//        };
         $scope.setletter = function(letter) {
             $scope.letter = letter;
             $scope.gotoPage(1);

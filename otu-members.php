@@ -473,3 +473,19 @@ function otu_signup( $atts ){
     return ob_get_clean();
 }
 add_shortcode( 'otu_signup', 'otu_signup' );
+
+/*
+ * prevent member from exercising the lost password form. 
+ * Members should not be able to change their password, as it should be set to the regimental number
+ */
+function remove_lost_your_password($text) 
+  {
+    return str_replace( array('Lost your password?', 'Lost your password'), '', trim($text, '?') ); 
+  }
+add_filter( 'gettext', 'remove_lost_your_password'  );
+
+function disable_reset_lost_password() 
+ {
+   return false;
+ }
+ add_filter( 'allow_password_reset', 'disable_reset_lost_password');
