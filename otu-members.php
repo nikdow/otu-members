@@ -484,8 +484,4 @@ function remove_lost_your_password($text)
   }
 add_filter( 'gettext', 'remove_lost_your_password'  );
 
-function disable_reset_lost_password() 
- {
-   return false;
- }
- add_filter('allow_password_reset', '__return_false' );
+add_filter('allow_password_reset', '__return_false' );
