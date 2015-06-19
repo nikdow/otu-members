@@ -22,6 +22,15 @@ function add_otu_fields( $user )
         <h3>OTU data</h3>
 
         <table class="form-table">
+            
+            <tr>
+                <th><label for="committee">Committee Member</label></th>
+                <td><input style="width: 16px;" type="checkbox" name="committee" <?=get_the_author_meta( 'committee', $user->ID ) ? "checked" : "";?> class="regular-text" />
+                <br/>
+                Ticked here will show on the home page committee avatars
+                </td>
+            </tr>
+            
             <tr>
                 <th><label for="pmpro_regimental_number">Regimental Number</label></th>
                 <td><input type="text" name="pmpro_regimental_number" DISABLED value="<?php echo esc_attr(get_the_author_meta( 'pmpro_regimental_number', $user->ID )); ?>" class="regular-text" />
@@ -239,6 +248,7 @@ function CBDWeb_copyUser() {
         
         $meta_keys = array(
             'pmpro_bfirstname',
+            'committee',
             'pmpro_class',
             'pmpro_baddress1',
             'pmpro_bstate',
@@ -296,6 +306,7 @@ function save_otu_fields( $user_id )
         update_user_meta( $user_id,'pmpro_regimental_number', sanitize_text_field( $_POST['pmpro_regimental_number'] ) );
     
     update_user_meta ( $user_id, 'pmpro_class', sanitize_text_field( str_replace("//", "/", $_POST['pmpro_class'] ) ) );
+    update_user_meta ( $user_id, 'committee', isset ( $_POST['committee'] ) ? "1" : "0" );
     
     update_user_meta ( $user_id, 'middlename', sanitize_text_field( $_POST['middlename'] ) );
     update_user_meta ( $user_id, 'corps', sanitize_text_field( $_POST['corps'] ) );
