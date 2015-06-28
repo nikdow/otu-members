@@ -13,6 +13,16 @@ defined('ABSPATH') or die("No script kiddies please!");
 require_once plugin_dir_path ( __FILE__ ) . 'memberlist.php';
 // require_once plugin_dir_path( __FILE__ ) . 'importAvatars.php';
 
+add_action ( 'user_register', 'register_otu_fields' );
+
+function register_otu_fields( $user_id ) {
+    
+    $username_bits = explode( '_', $_POST['user_login'] );
+    update_user_meta($user_id, 'pmpro_regimental_number', $username_bits[1] );
+    
+}
+
+
 add_action( 'show_user_profile', 'add_otu_fields' );
 add_action( 'edit_user_profile', 'add_otu_fields' );
 
