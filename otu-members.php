@@ -333,6 +333,16 @@ function save_otu_fields( $user_id )
     update_user_meta ( $user_id, 'comments', sanitize_text_field( $_POST['comments'] ) );
     update_user_meta ( $user_id, 'website', sanitize_text_field( $_POST['website'] ) );
     
+    $_POST['billing_first_name'] = $_POST['first_name'];
+    $_POST['billing_last_name'] = $_POST['last_name'];
+    $_POST['billing_address_1'] = $_POST['pmpro_baddress1'];
+    $_POST['billing_address_2'] = $_POST['pmpro_baddress2'];
+    $_POST['billing_city'] = $_POST['pmpro_bcity'];
+    $_POST['billing_postcode'] = $_POST['pmpro_bzipcode'];
+    $_POST['billing_state'] = $_POST['pmpro_bstate'];
+    $_POST['billing_phone'] = $_POST['pmpro_bphone'];
+    $_POST['billing_email'] = $_POST['email'];
+    
     $user = get_userdata( $user_id );
     if( in_array('subscriber', $user->roles ) ) {
         // password is regimental number
