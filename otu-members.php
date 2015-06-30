@@ -491,8 +491,11 @@ function otu_signup( $atts ){
                  $edDT->setTimestamp($ed);
                  ?>
                  Your membership is paid to <?=$edDT->format('d/m/Y');?>. Memberships fall due on 1st July each year.
-                 To renew in advance, <a href="<?=$url?>/">click here</a>.
-                 <?php
+                 <?php if ( pmpro_isLevelRecurring ( $level ) ) { ?>
+                    You have set up recurring payments so your membership will automatically renew.
+                 <?php } else { ?>
+                    To renew in advance, <a href="<?=$url?>/">click here</a>.
+                 <?php }
             } else if ( $level->ID == 2 ){ 
                 ?>
                  You are an honorary member, no subscription is payable.
