@@ -503,7 +503,7 @@ function otu_signup( $atts ){
                  <a href="<?=$url?>">Renew your membership now</a>.
              <?php }
          } else { ?>
-             <a href="<?=site_url()?>/sign-in-to-otu-website/">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
+             <a href="<?=get_option('otu-members-login');?>">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
          <?php }
     return ob_get_clean();
 }
@@ -520,3 +520,53 @@ function remove_lost_your_password($text)
 add_filter( 'gettext', 'remove_lost_your_password'  );
 
 add_filter('allow_password_reset', '__return_false' );
+
+add_filter( 'login_url', 'otu_login_page', 10, 2 );
+function otu_login_page( $login_url, $redirect ) {
+    return get_option('otu-members-login') . '?redirect_to=' . $redirect;
+}
+
+add_filter('login_form', 'loginform' );
+function loginform () {
+    echo "\t\t<b>OTU members note:</b> this is the Admin login form. Please go to <a href=\"" . get_option('otu-members-login') . "\">member login</a>.<br />\n";
+}
+
+/** Step 2 (from text above). */
+add_action( 'admin_menu', 'my_plugin_menu' );
+add_action( 'admin_init', 'register_mysettings' );
+
+function register_mysettings() { // whitelist options
+  register_setting( 'otu-members-group', 'otu-members-login' );
+}
+
+/** Step 1. */
+function my_plugin_menu() {
+	add_options_page( 'Membership options', 'Membership', 'manage_options', 'otu-members', 'my_plugin_options' );
+}
+
+/** Step 3. */
+function my_plugin_options() {
+	if ( !current_user_can( 'manage_options' ) )  {
+		wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+	}
+        ?>
+	<div class="wrap">
+	    <form method="post" action="options.php"> 
+                <?php
+                settings_fields( 'otu-members-group' );
+                do_settings_sections( 'otu-members-group' );
+                ?>
+                <table class="form-table">
+                    <tr valign="top">
+                    <th scope="row">Member login page</th>
+                    <td><input type="text" name="otu-members-login" value="<?php echo esc_attr( get_option('otu-members-login') ); ?>" /></td>
+                    </tr>
+
+                </table>
+                <?php
+                submit_button(); ?>
+            </form>
+	</div>
+        <?php
+}
+?>
