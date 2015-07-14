@@ -351,9 +351,9 @@ function save_otu_fields( $user_id )
         // username is lastname_regimental number
         global $wpdb;
         $wpdb->update($wpdb->users, 
-            array('user_login' => $_POST['last_name'] . "_" . $_POST['pmpro_regimental_number'] ),
+            array('user_login' => sanitize_text_field( $_POST['last_name'] . "_" . $_POST['pmpro_regimental_number'] ) ),
             array( 'ID'=>$user_id ),
-            array( 'user_nicename'=>$_POST['first_name'] . " " . $_POST['last_name'] ),
+            array( 'user_nicename'=>sanitize_text_field ( $_POST['first_name'] . " " . $_POST['last_name'] ) ),
             array( '%s'),
             array( '%d' ),
             array( '%s' )
