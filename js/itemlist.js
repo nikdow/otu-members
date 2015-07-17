@@ -35,8 +35,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
                 data.action = 'CBDWeb_get_items';
                 $scope.requests.push(
                     $.post($scope.data.ajaxurl + "/otu-members", data, function( response ){
-                       var ajaxdata = $.parseJSON(response);
-                       $.extend($scope.data, ajaxdata);
+                       $.extend($scope.data, response);
                        $scope.dopagearray();
                        $timeout ( function() {
                            $('#items').animate( { opacity: 1 } );
@@ -65,8 +64,17 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
         $scope.show = function(item, $) {
             $ = jQuery;
             $scope.item = item;
+            $scope.album_requested = false;
             $scope.$on('ngDialog.opened', function(e, $dialog) {
-                $('#gallery').html(item.gallery);
+                if ( $scope.album_requested ) return;
+                $scope.album_requested = true;
+                if ( ! $scope.item.album || $scope.item.album <= 1 ) {
+                    $('#wppa-container-1').html("No photographs loaded by this member");
+                    return;
+                }
+                var ajaxurl = $scope.data.siteurl + "/wp-content/plugins/wp-photo-album-plus/wppa-ajax-front.php?" +
+                    "action=wppa&wppa-action=render&wppa-cover=0&wppa-album=" + $scope.item.album + "&wppa-occur=1";
+                wppaDoAjaxRender( 1, ajaxurl, '' )
             })
             ngDialog.open( {
                 template: 'templateId',
