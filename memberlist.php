@@ -159,12 +159,13 @@ function otu_itemlist (  ) {
             ?>
         </div>
         <div id='membertypes'>
-            <div class='membertype' ng-class='{selected: isMemberType("")}' ng-click='togglemembertype("")'>Unfinancial</div>
+            <div class='membertype' ng-class='{selected: isMemberType("") && ! isMemberType("d")}' ng-click='togglemembertype("")'>Unfinancial</div>
             <?php
             foreach ( $membertypes as $membertype ) {
-                echo "<div class='membertype' ng-class='{selected: isMemberType(\"" . $membertype->id . "\")}' ng-click='togglemembertype(\"" . $membertype->id . "\")'>" . $membertype->name . "</div>";
+                echo "<div class='membertype' ng-class='{selected: isMemberType(\"" . $membertype->id . "\") && ! isMemberType(\"d\")}' ng-click='togglemembertype(\"" . $membertype->id . "\")'>" . $membertype->name . "</div>";
             }
             ?>
+            <div class='membertype' ng-class='{selected: isMemberType("d")}' ng-click='togglemembertype("d")'>Deceased</div>
         </div>
         <div id="letters">
             <div class='letter wider' ng-class='{selected: (letter=="")}' ng-click='setletter("")'>ALL</div>
@@ -245,12 +246,17 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         $params[] = intval ( $matches[2] );
     }
     if ( Count($membertypes)>0) {
-        $membertypearr = array();
-        foreach ( $membertypes as $membertype ) {
-            $membertypearr[] = "%d";
-            $params[] = $membertype;
+        if ( in_array ( "d", $membertypes ) ) { // deceased
+            $deceased = true;
+        } else {
+            $deceased = false;
+            $membertypearr = array();
+            foreach ( $membertypes as $membertype ) {
+                $membertypearr[] = "%d";
+                $params[] = $membertype;
+            }
+            $membertypestr = join(",", $membertypearr );
         }
-        $membertypestr = join(",", $membertypearr );
     }
     if ( Count($states)>0 ) {
         $statearr = array();
@@ -275,10 +281,12 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
         " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID AND p.status='active'" .
         " LEFT JOIN $wpdb->prefix" . "wppa_albums wppa ON u.user_login=wppa.owner" .
+        " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key=\"pmpro_deceased\"" .
         " WHERE m.meta_value=0" .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
         ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
-        ( Count($membertypes)==0 ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
+        " AND d.meta_value='" . ( $deceased ? "1" : "0" ) . "'" .
+        ( Count($membertypes)==0 || $deceased ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
         ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
         " ORDER BY l.meta_value, name" .
         ( $first_item >= 0 ? " LIMIT %d,%d" : "" );
@@ -374,12 +382,17 @@ function download_items( $first_item, $rows_per_page, $letter='', $membertypes=a
         $params[] = intval ( $matches[2] );
     }
     if ( Count($membertypes)>0) {
-        $membertypearr = array();
-        foreach ( $membertypes as $membertype ) {
-            $membertypearr[] = "%d";
-            $params[] = $membertype;
+        if ( in_array ( "d", $membertypes ) ) { // deceased
+            $deceased = true;
+        } else {
+            $deceased = false;
+            $membertypearr = array();
+            foreach ( $membertypes as $membertype ) {
+                $membertypearr[] = "%d";
+                $params[] = $membertype;
+            }
+            $membertypestr = join(",", $membertypearr );
         }
-        $membertypestr = join(",", $membertypearr );
     }
     if ( Count($states)>0 ) {
         $statearr = array();
@@ -399,13 +412,16 @@ function download_items( $first_item, $rows_per_page, $letter='', $membertypes=a
         " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
         " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
+        " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key=\"pmpro_deceased\"" .
         ( $clss == '' ? "" : " LEFT JOIN $wpdb->usermeta c ON c.user_id=u.ID AND c.meta_key='pmpro_class'" ) .
         ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
         " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID" .
+            
         " WHERE m.meta_value=0" .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
         ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
-        ( Count($membertypes)==0 ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
+        " AND d.meta_value='" . ( $deceased ? "1" : "0" ) . "'" .
+        ( Count($membertypes)==0 || $deceased ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
         ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
         " ORDER BY l.meta_value, name" .
         ( $first_item >= 0 ? " LIMIT %d,%d" : "" );
