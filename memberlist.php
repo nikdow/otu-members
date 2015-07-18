@@ -128,6 +128,16 @@ function otu_itemlist (  ) {
                         <td>{{item.state}}</td>
                         <td colspan="3">{{item.postcode}}</td>
                     </tr>
+                    <tr>
+                        <td>Vietnam Service</td>
+                        <td>Partner</td>
+                        <td>Awards</td>
+                    </tr>
+                    <tr>
+                        <td>{{item.vietnam ? "Yes" : "No"}}</td>
+                        <td>{{item.partner}}</td>
+                        <td>{{item.awards}}</td>
+                    </tr>        
                 </tbody>
             </table>
             <div id="wppa-container-1">Searching for member's photographs...</div>
@@ -302,6 +312,9 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
             'city'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bcity'][0],
             'postcode'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bzipcode'][0],
             'avatar'=>get_avatar_url ( get_avatar( $row->ID ) ),
+            'vietnam'=>$custom['vietnam'][0],
+            'awards'=>$custom['awards'][0],
+            'partner'=>$custom['partner'][0],
             'album'=> $row->album,
         ); 
         $items[] = $item;
