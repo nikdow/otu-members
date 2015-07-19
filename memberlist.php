@@ -278,14 +278,14 @@ function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='
     $query = 
         "SELECT" . ( $paged ? " SQL_CALC_FOUND_ROWS" : "" ) .
         " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
-        " wppa.id as album," .
-        " u.user_email as email, u.display_name as name, u.user_login as login, u.ID FROM " . $wpdb->users . " u" .
+        ( $paged ? " wppa.id as album," : "" ) .
+        " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
         " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
         ( $clss == '' ? "" : " LEFT JOIN $wpdb->usermeta c ON c.user_id=u.ID AND c.meta_key='pmpro_class'" ) .
         ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
         " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID AND p.status='active'" .
-        " LEFT JOIN $wpdb->prefix" . "wppa_albums wppa ON u.user_login=wppa.owner" .
+        ( $paged ? " LEFT JOIN $wpdb->prefix" . "wppa_albums wppa ON u.user_login=wppa.owner" : "" ) .
         " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key=\"pmpro_deceased\"" .
         " WHERE m.meta_value=0" .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
