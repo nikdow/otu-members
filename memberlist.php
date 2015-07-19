@@ -37,20 +37,26 @@ function otu_itemlist (  ) {
     $add_itemlist_script = true;
     
     $rows_per_page = 10;
-    $data = get_items( 0, $rows_per_page ); // first lot of items are loaded with the page
-    $data['ajaxurl'] = admin_url('admin-ajax.php');
-    $data['siteurl'] = get_site_url();
-    $data['rows_per_page'] = $rows_per_page;
     global $wpdb;
     /*
      * get membership levels
      */
     $query = "SELECT id, name FROM $wpdb->pmpro_membership_levels";
     $membertypes = $wpdb->get_results ( $query, OBJECT );
-    $data['membertypes'] = array();
+    
+    $simplemembertypes = array('0');
+    $membertypearr = array();
     foreach($membertypes as $membertype ) {
-        $data['membertypes'][] = array('id'=>$membertype->id, 'name'=>$membertype->name );
+        $membertypearr[] = array('id'=>$membertype->id, 'name'=>$membertype->name );
+        $simplemembertypes[] = $membertype->id; // enables inclusion of all membertypes in initial data call (but not deceased)
     }
+    $query = get_query( 0, $rows_per_page, $simplemembertypes ); // first lot of items are loaded with the page
+    $data = get_items ( $query, $rows_per_page );
+    $data['membertypes'] = $membertypearr; // used to display membertype choosers
+    $data['ajaxurl'] = admin_url('admin-ajax.php');
+    $data['siteurl'] = get_site_url();
+    $data['rows_per_page'] = $rows_per_page;
+    
     /*
      * get States
      */
@@ -92,6 +98,7 @@ function otu_itemlist (  ) {
         $clsses[] =  $class['term'] . "/" . $class['year'];
     }
     $data['clsses'] = $clsses;
+    
 /*    $data['gallery'] =  
         do_shortcode ( '[wppa type="album" album="#owner,cbdweb,$Members"][/wppa]' ); // Use member cbdweb to create an empty container
 */    ob_start();
@@ -159,10 +166,10 @@ function otu_itemlist (  ) {
             ?>
         </div>
         <div id='membertypes'>
-            <div class='membertype' ng-class='{selected: isMemberType("") && ! isMemberType("d")}' ng-click='togglemembertype("")'>Unfinancial</div>
+            <div class='membertype' ng-class='{selected: isMemberType("") }' ng-click='togglemembertype("")'>Unfinancial</div>
             <?php
             foreach ( $membertypes as $membertype ) {
-                echo "<div class='membertype' ng-class='{selected: isMemberType(\"" . $membertype->id . "\") && ! isMemberType(\"d\")}' ng-click='togglemembertype(\"" . $membertype->id . "\")'>" . $membertype->name . "</div>";
+                echo "<div class='membertype' ng-class='{selected: isMemberType(\"" . $membertype->id . "\") }' ng-click='togglemembertype(\"" . $membertype->id . "\")'>" . $membertype->name . "</div>";
             }
             ?>
             <div class='membertype' ng-class='{selected: isMemberType("d")}' ng-click='togglemembertype("d")'>Deceased</div>
@@ -236,7 +243,8 @@ function get_avatar_url($get_avatar){
     preg_match("/src=['\"](.*?)['\"]/i", $get_avatar, $matches);
     return $matches[1];
 }
-function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(), $states=array(), $clss='' ){
+function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='', $states=array(), $clss='' ){
+    $paged = $first_item >= 0;
     global $wpdb;
     $params = array();
     if( $letter != '' ) $params[] = $letter;
@@ -245,19 +253,16 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         $params[] = intval ( $matches[1] );
         $params[] = intval ( $matches[2] );
     }
-    if ( Count($membertypes)>0) {
-        if ( in_array ( "d", $membertypes ) ) { // deceased
-            $deceased = true;
+    $membertypearr = array();
+    foreach ( $membertypes as $membertype ) {
+        $membertypearr[] = "%d";
+        if ( $membertype == "d" ) { // deceased
+            $params[] = -1;
         } else {
-            $deceased = false;
-            $membertypearr = array();
-            foreach ( $membertypes as $membertype ) {
-                $membertypearr[] = "%d";
-                $params[] = $membertype;
-            }
-            $membertypestr = join(",", $membertypearr );
+            $params[] = $membertype;
         }
     }
+    $membertypestr = join(",", $membertypearr );
     if ( Count($states)>0 ) {
         $statearr = array();
         foreach ( $states as $state ) {
@@ -266,12 +271,12 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         }
         $statestr = join(",", $statearr );
     }
-    if ( $first_item >= 0 ) { // if negative, get all rows
+    if ( $paged ) { // if negative, get all rows
         $params[] = $first_item;
         $params[] = $rows_per_page;
     }
     $query = 
-        "SELECT SQL_CALC_FOUND_ROWS" .
+        "SELECT" . ( $paged ? " SQL_CALC_FOUND_ROWS" : "" ) .
         " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
         " wppa.id as album," .
         " u.user_email as email, u.display_name as name, u.user_login as login, u.ID FROM " . $wpdb->users . " u" .
@@ -285,54 +290,61 @@ function get_items( $first_item, $rows_per_page, $letter='', $membertypes=array(
         " WHERE m.meta_value=0" .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
         ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
-        " AND d.meta_value='" . ( $deceased ? "1" : "0" ) . "'" .
-        ( Count($membertypes)==0 || $deceased ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
+        " AND IF( d.meta_value='1', -1, IF( p.membership_id IS NULL, 0, p.membership_id ) ) IN (" . $membertypestr . ")" .
         ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
         " ORDER BY l.meta_value, name" .
-        ( $first_item >= 0 ? " LIMIT %d,%d" : "" );
+        ( $paged ? " LIMIT %d,%d" : "" );
     if ( Count ( $params ) > 0 ) {
         $query = $wpdb->prepare ( $query, $params );
     }
-    //echo $query . "<br/>";
+    return $query;
+}
+function get_items ( $query, $rows_per_page ) {
+    
+    global $wpdb;
+    
     $rows = $wpdb->get_results ( $query );
-    
-// get album number for each member
-    
-    
-    
     $nitems = $wpdb->get_var('SELECT FOUND_ROWS();');
+    
     $items = array();
     foreach ( $rows as $row ) {
-        $custom = get_user_meta( $row->ID );
+        // get meta values directly, WP can be inefficient
+        $queryc = $wpdb->prepare ( "SELECT meta_key, meta_value
+             FROM $wpdb->usermeta
+             WHERE user_id=%u", $row->ID );
+        $customs = $wpdb->get_results( $queryc );
+        $custom = array();
+        foreach ( $customs as $c ) {
+            $custom[$c->meta_key] = $c->meta_value;
+        }
+        
         $item = array (
-            'email'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $row->email,
+            'email'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $row->email,
             'name'=>$row->name,
             'membershiplevel'=>$row->ml,
-            'class'=>( isset($custom['pmpro_class']) ? $custom['pmpro_class'][0] : ""),
-            'homephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bphone'][0],
-            'mobilephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bmobile'][0],
-            'businessphone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bbusiness'][0],
-            'deceased'=>$custom['pmpro_deceased'][0],
+            'class'=>( isset($custom['pmpro_class']) ? $custom['pmpro_class'] : ""),
+            'homephone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bphone'],
+            'mobilephone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bmobile'],
+            'businessphone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bbusiness'],
+            'deceased'=>$custom['pmpro_deceased'],
             'ID'=>$row->ID,
-            'address1'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_baddress1'][0],
-            'address2'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'][0] : "",
-            'state'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bstate'][0],
-            'city'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bcity'][0],
-            'postcode'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bzipcode'][0],
+            'address1'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_baddress1'],
+            'address2'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'] : "",
+            'state'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bstate'],
+            'city'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bcity'],
+            'postcode'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bzipcode'],
             'avatar'=>get_avatar_url ( get_avatar( $row->ID ) ),
-            'vietnam'=>$custom['vietnam'][0],
-            'awards'=>$custom['awards'][0],
-            'partner'=>$custom['partner'][0],
+            'vietnam'=>$custom['vietnam'],
+            'awards'=>$custom['awards'],
+            'partner'=>$custom['partner'],
             'album'=> $row->album,
         ); 
         $items[] = $item;
     }
     $data = array ( 'items'=>$items, 'query'=>$query );
-    if ( $first_item >= 0 ) {
-        $pages = floor ( ($nitems - 0.9999) / $rows_per_page ) + 1;
-        if(!$pages) $pages = 1;
-        $data['pages'] = $pages;
-    }
+    $pages = floor ( ($nitems - 0.9999) / $rows_per_page ) + 1;
+    if(!$pages) $pages = 1;
+    $data['pages'] = $pages;
     return $data;
 }
 /*
@@ -349,7 +361,9 @@ function CBDWeb_get_items() {
     $membertype = isset( $_POST['membertype'] ) ? $_POST['membertype'] : array();
     $state = isset ( $_POST['state'] ) ? $_POST['state'] : array();
     $first_item = ( $page - 1 ) * $rows_per_page;
-    $data = get_items( $first_item, $rows_per_page, $letter, $membertype, $state, $clss );
+    $query = get_query( $first_item, $rows_per_page, $membertype, $letter, $state, $clss ); // first lot of items are loaded with the page
+    $data = get_items ( $query, $rows_per_page );
+
     header( "Content-Type: application/json" );
     echo json_encode( $data );
     die;
@@ -358,99 +372,46 @@ function CBDWeb_get_items() {
 add_action( 'wp_ajax_CBDWeb_download_items', 'CBDWeb_download_items' );
 add_action( 'wp_ajax_nopriv_CBDWeb_download_items', 'CBDWeb_download_items' );
 
-function CBDWeb_download_items() {
+function CBDWeb_download_items() { // because this can be a large file, output each row as it is retrieved. 
+    /* c.f. paginated where the limit in the query prevents large retrieval and an array is used to create the JSON */
     $letter = $_GET['letter'];
     $clss = $_GET['clss'];
     $membertype = isset( $_GET['membertype'] ) ? $_GET['membertype'] : array();
     $state = isset ( $_GET['state'] ) ? $_GET['state'] : array();
     ob_clean();
     download_send_headers("OTU_members_" . $letter . $clss . date("Y-m-d") . ".csv");
-    download_items( -1, 0, $letter, $membertype, $state, $clss );
-    die;
-}
-/*
- * download_items is based on function get_items but outputs CSV file.
- * Do it line-by-line to avoid running out of memory
- */
-function download_items( $first_item, $rows_per_page, $letter='', $membertypes=array(), $states=array(), $clss='' ){
+
+    $query = get_query ( -1, 0, $membertype, $letter, $state, $clss );
     global $wpdb;
-    $params = array();
-    if( $letter != '' ) $params[] = $letter;
-    if( $clss != '' ) {
-        preg_match('/^([\d]+)\/([\d]+)$/', $clss, $matches );
-        $params[] = intval ( $matches[1] );
-        $params[] = intval ( $matches[2] );
-    }
-    if ( Count($membertypes)>0) {
-        if ( in_array ( "d", $membertypes ) ) { // deceased
-            $deceased = true;
-        } else {
-            $deceased = false;
-            $membertypearr = array();
-            foreach ( $membertypes as $membertype ) {
-                $membertypearr[] = "%d";
-                $params[] = $membertype;
-            }
-            $membertypestr = join(",", $membertypearr );
-        }
-    }
-    if ( Count($states)>0 ) {
-        $statearr = array();
-        foreach ( $states as $state ) {
-            $statearr[] = "%s";
-            $params[] = $state;
-        }
-        $statestr = join(",", $statearr );
-    }
-    if ( $first_item >= 0 ) { // if negative, get all rows
-        $params[] = $first_item;
-        $params[] = $rows_per_page;
-    }
-    $query = 
-        "SELECT SQL_CALC_FOUND_ROWS" .
-        " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
-        " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
-        " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
-        " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
-        " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key=\"pmpro_deceased\"" .
-        ( $clss == '' ? "" : " LEFT JOIN $wpdb->usermeta c ON c.user_id=u.ID AND c.meta_key='pmpro_class'" ) .
-        ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
-        " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID" .
-            
-        " WHERE m.meta_value=0" .
-        ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
-        ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
-        " AND d.meta_value='" . ( $deceased ? "1" : "0" ) . "'" .
-        ( Count($membertypes)==0 || $deceased ? "" : " AND IF(p.membership_id IS NULL, 0, p.membership_id) IN (" . $membertypestr . ")" ) .
-        ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
-        " ORDER BY l.meta_value, name" .
-        ( $first_item >= 0 ? " LIMIT %d,%d" : "" );
-    if ( Count ( $params ) > 0 ) {
-        $query = $wpdb->prepare ( $query, $params );
-    }
-    //echo $query . "<br/>";
     $rows = $wpdb->get_results ( $query );
-    $nitems = $wpdb->get_var('SELECT FOUND_ROWS();');
-    $items = array();
+
     $count = 0;
     $df = fopen("php://output", 'w');
     foreach ( $rows as $row ) {
-        $custom = get_user_meta( $row->ID );
+        $queryc = $wpdb->prepare ( "SELECT meta_key, meta_value
+             FROM $wpdb->usermeta
+             WHERE user_id=%u", $row->ID );
+        $customs = $wpdb->get_results( $queryc );
+        $custom = array();
+        foreach ( $customs as $c ) {
+            $custom[$c->meta_key] = $c->meta_value;
+        }
+//        $custom = get_user_meta( $row->ID );
         $item = array (
-            'email'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $row->email,
+            'email'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $row->email,
             'name'=>$row->name,
             'membershiplevel'=>$row->ml,
-            'class'=>$custom['pmpro_class'][0],
-            'homephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bphone'][0],
-            'mobilephone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bmobile'][0],
-            'businessphone'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bbusiness'][0],
-            'deceased'=>$custom['pmpro_deceased'][0],
+            'class'=>$custom['pmpro_class'],
+            'homephone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bphone'],
+            'mobilephone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bmobile'],
+            'businessphone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bbusiness'],
+            'deceased'=>$custom['pmpro_deceased'],
             'ID'=>$row->ID,
-            'address1'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_baddress1'][0],
-            'address2'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'][0] : "",
-            'state'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bstate'][0],
-            'city'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bcity'][0],
-            'postcode'=>$custom['pmpro_do_not_contact'][0]==1 || $custom['pmpro_deceased'][0]==1 ? "" : $custom['pmpro_bzipcode'][0],
+            'address1'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_baddress1'],
+            'address2'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'] : "",
+            'state'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bstate'],
+            'city'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bcity'],
+            'postcode'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bzipcode'],
         );
         if( ! $count ) { // header row
             fputcsv( $df, array_keys( $item ) );
@@ -459,22 +420,9 @@ function download_items( $first_item, $rows_per_page, $letter='', $membertypes=a
         fputcsv( $df, $item );
     }
     fclose($df);
+    die;
 }
 
-function array2csv(array &$array)
-{
-   if (count($array) == 0) {
-     return null;
-   }
-   ob_start();
-   $df = fopen("php://output", 'w');
-   fputcsv($df, array_keys(reset($array)));
-   foreach ($array as $row) {
-      fputcsv($df, $row);
-   }
-   fclose($df);
-   return ob_get_clean();
-}
 function download_send_headers($filename) {
     // disable caching
     $now = gmdate("D, d M Y H:i:s");

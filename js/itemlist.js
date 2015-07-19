@@ -9,10 +9,9 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
         
         $scope.ajaxparams = function() {
             var sendmembertype = $.merge( [], $scope.membertype );
-               if(sendmembertype.length === $('.membertype').length && ! $scope.isMemberType ( "d" ) ) sendmembertype=[]; // prevents query needing to check this
-               var sendstate = $.merge( [], $scope.state );
-               if(sendstate.length === $('.state').length ) sendstate = [];
-               return { 'state':sendstate, 'membertype':sendmembertype, 'letter':$scope.letter, 'clss':$scope.clss };
+            var sendstate = $.merge( [], $scope.state );
+            if(sendstate.length === $('.state').length ) sendstate = [];
+            return { 'state':sendstate, 'membertype':sendmembertype, 'letter':$scope.letter, 'clss':$scope.clss };
         };
 
         $scope.gotoPage = function(page) {
@@ -172,7 +171,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
         $scope.letter = '';
         $scope.clss = '';
         $scope.membertype = [''];
-        $.each( $scope.data.membertypes, function(index, el) {
+        $.each( $scope.data.membertypes, function(index, el) { // everything except deceased
             $scope.membertype.push( el.id );
         });
         $scope.state = [''];
