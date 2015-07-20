@@ -11,7 +11,12 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
             var sendmembertype = $.merge( [], $scope.membertype );
             var sendstate = $.merge( [], $scope.state );
             if(sendstate.length === $('.state').length ) sendstate = [];
-            return { 'state':sendstate, 'membertype':sendmembertype, 'letter':$scope.letter, 'clss':$scope.clss };
+            return { 'state':sendstate, 
+                'membertype':sendmembertype, 
+                'letter':$scope.letter, 
+                'clss':$scope.clss, 
+                'search':$scope.search 
+            };
         };
 
         $scope.gotoPage = function(page) {
@@ -165,6 +170,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
                     alert ( 'file downloaded ' );
                 });
         };
+        
         $scope.pos = $('#items').offset();
         $scope.pos.left += 100;
         $scope.pos.top +=50;

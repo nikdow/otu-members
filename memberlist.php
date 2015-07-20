@@ -173,6 +173,7 @@ function otu_itemlist (  ) {
             }
             ?>
             <div class='membertype' ng-class='{selected: isMemberType("d")}' ng-click='togglemembertype("d")'>Deceased</div>
+            <div class="search"><form ng-submit="gotoPage(1)"><input placeholder="search" ng-model="search"></form></div>
         </div>
         <div id="letters">
             <div class='letter wider' ng-class='{selected: (letter=="")}' ng-click='setletter("")'>ALL</div>
@@ -243,10 +244,14 @@ function get_avatar_url($get_avatar){
     preg_match("/src=['\"](.*?)['\"]/i", $get_avatar, $matches);
     return $matches[1];
 }
-function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='', $states=array(), $clss='' ){
+function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='', $states=array(), $clss='', $search='' ){
     $paged = $first_item >= 0;
     global $wpdb;
     $params = array();
+    if ( $search != '' ) {
+        $params[] = '%' . $search . '%';
+        $params[] = '%' . $search . '%';
+    }
     if( $letter != '' ) $params[] = $letter;
     if( $clss != '' ) {
         preg_match('/^([\d]+)\/([\d]+)$/', $clss, $matches );
@@ -288,6 +293,7 @@ function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='
         ( $paged ? " LEFT JOIN $wpdb->prefix" . "wppa_albums wppa ON u.user_login=wppa.owner" : "" ) .
         " LEFT JOIN $wpdb->usermeta d ON d.user_id=u.ID AND d.meta_key=\"pmpro_deceased\"" .
         " WHERE m.meta_value=0" .
+        ( $search == '' ? "" : " AND ( u.display_name LIKE %s OR u.user_email LIKE %s )" ) .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
         ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
         " AND IF( d.meta_value='1', -1, IF( p.membership_id IS NULL, 0, p.membership_id ) ) IN (" . $membertypestr . ")" .
@@ -361,7 +367,8 @@ function CBDWeb_get_items() {
     $membertype = isset( $_POST['membertype'] ) ? $_POST['membertype'] : array();
     $state = isset ( $_POST['state'] ) ? $_POST['state'] : array();
     $first_item = ( $page - 1 ) * $rows_per_page;
-    $query = get_query( $first_item, $rows_per_page, $membertype, $letter, $state, $clss ); // first lot of items are loaded with the page
+    $search = $_POST['search'];
+    $query = get_query( $first_item, $rows_per_page, $membertype, $letter, $state, $clss, $search );
     $data = get_items ( $query, $rows_per_page );
 
     header( "Content-Type: application/json" );
@@ -378,10 +385,11 @@ function CBDWeb_download_items() { // because this can be a large file, output e
     $clss = $_GET['clss'];
     $membertype = isset( $_GET['membertype'] ) ? $_GET['membertype'] : array();
     $state = isset ( $_GET['state'] ) ? $_GET['state'] : array();
+    $search = $_GET['search'];
     ob_clean();
     download_send_headers("OTU_members_" . $letter . $clss . date("Y-m-d") . ".csv");
 
-    $query = get_query ( -1, 0, $membertype, $letter, $state, $clss );
+    $query = get_query ( -1, 0, $membertype, $letter, $state, $clss, $search );
     global $wpdb;
     $rows = $wpdb->get_results ( $query );
 
