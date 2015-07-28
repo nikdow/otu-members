@@ -10,9 +10,10 @@ function register_itemlist_script() {
     wp_register_script('itemlist',  plugins_url( 'js/itemlist.js' , __FILE__ ), array('jquery', 'angular') );
     wp_register_script('fileDownload', plugins_url( 'js/fileDownload.js', __FILE__ ), array('jquery') );
     wp_register_style('itemstyle', plugins_url('css/style.css', __FILE__ ) );
-    wp_register_script( 'dialog', plugins_url( 'js/ngDialog.js', __FILE__ ), array('jquery', 'angular' ) );
-    wp_register_style('dialogstyle', plugins_url( 'css/ngDialog.css', __FILE__ ) );
-    wp_register_style('dialogdefault', plugins_url( 'css/ngDialog-theme-default.css', __FILE__ ) );
+    wp_register_script( 'dialog', get_stylesheet_directory_uri() . '/ngDialog/js/ngDialog' . (WP_DEBUG ? '' : '.min') . '.js', array('jquery', 'angular' ) );
+    wp_register_style('dialogstyle', get_stylesheet_directory_uri() . '/ngDialog/css/ngDialog' . (WP_DEBUG ? '' : '.min') . '.css' );
+    wp_register_style('dialogdefault', get_stylesheet_directory_uri() . '/ngDialog/css/ngDialog-theme-default' . (WP_DEBUG ? '' : '.min') . '.css' );
+    wp_register_style('dialogcustom', plugins_url('css/ngDialogCustom.css', __FILE__ ), array('dialogstyle', 'dialogdefault') );
 }
 function enqueue_itemlist_script() {
 	global $add_itemlist_script;
@@ -28,6 +29,7 @@ function enqueue_itemlist_script() {
         wp_enqueue_script('dialog');
         wp_enqueue_style('dialogstyle');
         wp_enqueue_style( 'dialogdefault' );
+        wp_enqueue_style( 'dialogcustom' );
 }
 
 add_shortcode('otu_itemlist', 'otu_itemlist' );
@@ -324,25 +326,29 @@ function get_items ( $query, $rows_per_page ) {
             $custom[$c->meta_key] = $c->meta_value;
         }
         
+        $hidecontactdetails = 
+            ( isset ( $custom['pmpro_do_not_contact'] ) && $custom['pmpro_do_not_contact']==1 ) ||
+            ( isset ( $custom['pmpro_deceased'] ) && $custom['pmpro_deceased']==1 );
+        
         $item = array (
-            'email'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $row->email,
+            'email'=> $hidecontactdetails ? "" : $row->email,
             'name'=>$row->name,
             'membershiplevel'=>$row->ml,
             'class'=>( isset($custom['pmpro_class']) ? $custom['pmpro_class'] : ""),
-            'homephone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bphone'],
-            'mobilephone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bmobile'],
-            'businessphone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bbusiness'],
-            'deceased'=>$custom['pmpro_deceased'],
+            'homephone'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bphone'] ) ? $custom['pmpro_bphone'] : "",
+            'mobilephone'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bmobile'] ) ? $custom['pmpro_bmobile'] : "",
+            'businessphone'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bbusiness'] ) ? $custom['pmpro_bbusiness'] : "",
+            'deceased'=>isset ( $custom['pmpro_deceased'] ) ? $custom['pmpro_deceased'] : "",
             'ID'=>$row->ID,
-            'address1'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_baddress1'],
-            'address2'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'] : "",
-            'state'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bstate'],
-            'city'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bcity'],
-            'postcode'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bzipcode'],
+            'address1'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_baddress1'] ) ? $custom['pmpro_baddress1'] : "",
+            'address2'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'] : "",
+            'state'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bstate'] ) ? $custom['pmpro_bstate'] : "",
+            'city'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bcity'] ) ? $custom['pmpro_bcity'] : "",
+            'postcode'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bzipcode'] ) ? $custom['pmpro_bzipcode'] : "",
             'avatar'=>get_avatar_url ( get_avatar( $row->ID ) ),
-            'vietnam'=>$custom['vietnam'],
-            'awards'=>$custom['awards'],
-            'partner'=>$custom['partner'],
+            'vietnam'=>isset ( $custom['vietnam'] ) ? $custom['vietnam'] : "",
+            'awards'=>isset ( $custom['awards'] )  ? $custom['awards'] : "",
+            'partner'=>isset ( $custom['partner'] ) ? $custom['partner'] : "",
             'album'=> $row->album,
         ); 
         $items[] = $item;

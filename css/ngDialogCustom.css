@@ -1,0 +1,5 @@
+/* Override ngdialog default theme styles  */
+
+.ngdialog.ngdialog-theme-default .ngdialog-content {
+    width: 1000px;
+}
