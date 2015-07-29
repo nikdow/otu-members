@@ -411,21 +411,29 @@ function CBDWeb_download_items() { // because this can be a large file, output e
             $custom[$c->meta_key] = $c->meta_value;
         }
 //        $custom = get_user_meta( $row->ID );
+        $hidecontactdetails = 
+            ( isset ( $custom['pmpro_do_not_contact'] ) && $custom['pmpro_do_not_contact']==1 ) ||
+            ( isset ( $custom['pmpro_deceased'] ) && $custom['pmpro_deceased']==1 );
+        
         $item = array (
-            'email'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $row->email,
+            'email'=> $hidecontactdetails ? "" : $row->email,
             'name'=>$row->name,
             'membershiplevel'=>$row->ml,
-            'class'=>$custom['pmpro_class'],
-            'homephone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bphone'],
-            'mobilephone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bmobile'],
-            'businessphone'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bbusiness'],
-            'deceased'=>$custom['pmpro_deceased'],
+            'class'=>( isset($custom['pmpro_class']) ? $custom['pmpro_class'] : ""),
+            'homephone'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bphone'] ) ? $custom['pmpro_bphone'] : "",
+            'mobilephone'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bmobile'] ) ? $custom['pmpro_bmobile'] : "",
+            'businessphone'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bbusiness'] ) ? $custom['pmpro_bbusiness'] : "",
+            'deceased'=>isset ( $custom['pmpro_deceased'] ) ? $custom['pmpro_deceased'] : "",
             'ID'=>$row->ID,
-            'address1'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_baddress1'],
-            'address2'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'] : "",
-            'state'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bstate'],
-            'city'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bcity'],
-            'postcode'=>$custom['pmpro_do_not_contact']==1 || $custom['pmpro_deceased']==1 ? "" : $custom['pmpro_bzipcode'],
+            'address1'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_baddress1'] ) ? $custom['pmpro_baddress1'] : "",
+            'address2'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_baddress2'] ) ? $custom['pmpro_baddress2'] : "",
+            'state'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bstate'] ) ? $custom['pmpro_bstate'] : "",
+            'city'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bcity'] ) ? $custom['pmpro_bcity'] : "",
+            'postcode'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bzipcode'] ) ? $custom['pmpro_bzipcode'] : "",
+            'vietnam'=>isset ( $custom['vietnam'] ) ? $custom['vietnam'] : "",
+            'awards'=>isset ( $custom['awards'] )  ? $custom['awards'] : "",
+            'partner'=>isset ( $custom['partner'] ) ? $custom['partner'] : "",
+            'donotcontact'=>isset ( $custom['pmpro_do_not_contact'] ) ? $custom['pmpro_do_not_contact'] : "",
         );
         if( ! $count ) { // header row
             fputcsv( $df, array_keys( $item ) );

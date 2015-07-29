@@ -176,6 +176,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
         $scope.pos.top +=50;
         $scope.letter = '';
         $scope.clss = '';
+        $scope.search = '';
         $scope.membertype = [''];
         $.each( $scope.data.membertypes, function(index, el) { // everything except deceased
             $scope.membertype.push( el.id );
