@@ -242,7 +242,7 @@ function otu_itemlist (  ) {
 /* 
  * showing items to members - called from ajax wrapper and also when loading page initially
  */
-function get_avatar_url($get_avatar){
+function otu_get_avatar_url($get_avatar){
     preg_match("/src=['\"](.*?)['\"]/i", $get_avatar, $matches);
     return $matches[1];
 }
@@ -345,7 +345,7 @@ function get_items ( $query, $rows_per_page ) {
             'state'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bstate'] ) ? $custom['pmpro_bstate'] : "",
             'city'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bcity'] ) ? $custom['pmpro_bcity'] : "",
             'postcode'=> $hidecontactdetails ? "" : isset ( $custom['pmpro_bzipcode'] ) ? $custom['pmpro_bzipcode'] : "",
-            'avatar'=>get_avatar_url ( get_avatar( $row->ID ) ),
+            'avatar'=>otu_get_avatar_url ( get_avatar( $row->ID ) ),
             'vietnam'=>isset ( $custom['vietnam'] ) ? $custom['vietnam'] : "",
             'awards'=>isset ( $custom['awards'] )  ? $custom['awards'] : "",
             'partner'=>isset ( $custom['partner'] ) ? $custom['partner'] : "",
