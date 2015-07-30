@@ -143,7 +143,7 @@ function otu_itemlist (  ) {
                         <td>Awards</td>
                     </tr>
                     <tr>
-                        <td>{{item.vietnam ? "Yes" : "No"}}</td>
+                        <td>{{item.vietnam}}</td>
                         <td>{{item.partner}}</td>
                         <td>{{item.awards}}</td>
                     </tr>        
