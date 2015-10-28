@@ -473,7 +473,7 @@ class Otu_login extends WP_Widget {
 
 add_action('init', 'register_otu_script' );
 function register_otu_script() {
-	wp_register_script('script',  plugins_url( 'js/script.js', __FILE__ ), 'jquery');
+	wp_register_script('script',  plugins_url( 'js/script.js', __FILE__ ), 'jquery', '1.0', true);
         wp_enqueue_script('script');
         
 }
