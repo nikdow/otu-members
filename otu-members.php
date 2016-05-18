@@ -346,18 +346,19 @@ function save_otu_fields( $user_id )
     $user = get_userdata( $user_id );
     if( in_array('subscriber', $user->roles ) ) {
         // password is regimental number
-        if( $_POST['pmpro_regimental_number']) // it's disabled on edit
+        if( array_key_exists( 'pmpro_regimental_number', $_POST ) ) { // it's disabled on edit
             wp_set_password( $_POST['pmpro_regimental_number'], $user_id );
         // username is lastname_regimental number
-        global $wpdb;
-        $wpdb->update($wpdb->users, 
-            array('user_login' => sanitize_text_field( $_POST['last_name'] . "_" . $_POST['pmpro_regimental_number'] ) ),
-            array( 'ID'=>$user_id ),
-            array( 'user_nicename'=>sanitize_text_field ( $_POST['first_name'] . " " . $_POST['last_name'] ) ),
-            array( '%s'),
-            array( '%d' ),
-            array( '%s' )
-        );
+            global $wpdb;
+            $wpdb->update($wpdb->users, 
+                array('user_login' => sanitize_user( $_POST['last_name'] . "_" . $_POST['pmpro_regimental_number'] ) ),
+                array( 'ID'=>$user_id ),
+                array( 'user_nicename'=>sanitize_text_field ( $_POST['first_name'] . " " . $_POST['last_name'] ) ),
+                array( '%s'),
+                array( '%d' ),
+                array( '%s' )
+            );
+        }
     }
     update_user_meta( $user_id, 'pmpro_bemail', sanitize_text_field( $_POST['email'] ) );
     update_user_meta( $user_id,'pmpro_baddress1', sanitize_text_field( $_POST['pmpro_baddress1'] ) );
