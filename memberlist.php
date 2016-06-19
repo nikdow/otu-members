@@ -78,11 +78,12 @@ function otu_itemlist (  ) {
     $results = $wpdb->get_results ( $query, OBJECT );
     $classes = array();
     foreach ( $results as $result ) {
-        $match = preg_match('/^([\d]+)\/([\d]+)$/', $result->clss, $matches );
+        $match = preg_match('/^([\d]+)\/([\d]+)([a-zA-Z]+)?$/', $result->clss, $matches );
         if( $match ) {
             $term = intval( $matches[1] );
             $year = intval( $matches[2] );
-            $arr = array('term'=>$term, 'year'=>$year );
+            $suffix = $matches[3] ? $matches[3] : "";
+            $arr = array('term'=>$term, 'year'=>$year, 'suffix'=>$suffix );
             if( array_search ( $arr, $classes ) === false ) {
                 $classes[] = $arr;
             }
@@ -91,13 +92,14 @@ function otu_itemlist (  ) {
     function sortclass($a, $b) {
         $va = $a['year'] * 1000 + $a['term'];
         $vb = $b['year'] * 1000 + $b['term'];
-        if ( $va == $vb ) return 0;
+        if( $va === $vb && $a['suffix'] === $b['suffix'] ) return 0;
+        if( $va === $vb ) return $a['suffix'] < $b['suffix'] ? -1 : 1;
         return ( $va < $vb ) ? -1 : 1;
     }
     usort ( $classes, "sortclass" );
     $clsses = array();
     foreach ( $classes as $class ) {
-        $clsses[] =  $class['term'] . "/" . $class['year'];
+        $clsses[] =  $class['term'] . "/" . $class['year'] . $class['suffix'];
     }
     $data['clsses'] = $clsses;
     
@@ -256,9 +258,9 @@ function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='
     }
     if( $letter != '' ) $params[] = $letter;
     if( $clss != '' ) {
-        preg_match('/^([\d]+)\/([\d]+)$/', $clss, $matches );
+        preg_match('/^([\d]+)\/([\d]+)([a-zA-z]+)?$/', $clss, $matches );
         $params[] = intval ( $matches[1] );
-        $params[] = intval ( $matches[2] );
+        $params[] = intval ( $matches[2] ) . ( $matches[3] ? $matches[3] : "" );
     }
     $membertypearr = array();
     foreach ( $membertypes as $membertype ) {
@@ -297,7 +299,7 @@ function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='
         " WHERE m.meta_value=0" .
         ( $search == '' ? "" : " AND ( u.display_name LIKE %s OR u.user_email LIKE %s )" ) .
         ( $letter == '' ? "" : " AND SUBSTRING(l.meta_value, 1, 1)=%s" ) .
-        ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%d" ) .
+        ( $clss == '' ? "" : " AND SUBSTRING_INDEX(c.meta_value, '/', 1)=%d AND SUBSTRING_INDEX(c.meta_value, '/', -1)=%s" ) .
         " AND IF( d.meta_value='1', -1, IF( p.membership_id IS NULL, 0, p.membership_id ) ) IN (" . $membertypestr . ")" .
         ( Count($states)==0 ? "" : " AND s.meta_value IN (" . $statestr . ")" ) .
         " ORDER BY l.meta_value, name" .
