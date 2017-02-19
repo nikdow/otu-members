@@ -522,7 +522,7 @@ add_filter( 'gettext', 'remove_lost_your_password'  );
 
 add_filter('allow_password_reset', '__return_false' );
 
-add_filter( 'login_url', 'otu_login_page', 10, 2 );
+// add_filter( 'login_url', 'otu_login_page', 10, 2 );
 function otu_login_page( $login_url, $redirect ) {
     return get_option('otu-members-login') . '?redirect_to=' . $redirect;
 }
