@@ -323,6 +323,7 @@ function get_items ( $query, $rows_per_page ) {
         $queryc = $wpdb->prepare ( "SELECT meta_key, meta_value
              FROM $wpdb->usermeta
              WHERE user_id='%u'", $row->ID );
+        error_log( $queryc );
         $customs = $wpdb->get_results( $queryc );
         $custom = array();
         foreach ( $customs as $c ) {
