@@ -318,12 +318,12 @@ function get_items ( $query, $rows_per_page ) {
     
     $items = array();
     foreach ( $rows as $row ) {
-        error_log( print_r($row) );
+        error_log( var_dump($row) );
         error_log( 'ID: ' . $row->ID );
         // get meta values directly, WP can be inefficient
         $queryc = $wpdb->prepare ( "SELECT meta_key, meta_value
              FROM $wpdb->usermeta
-             WHERE user_id=%u", $row->ID );
+             WHERE user_id=%s", $row->ID );
         error_log( $queryc );
         $customs = $wpdb->get_results( $queryc );
         $custom = array();
