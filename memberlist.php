@@ -406,7 +406,7 @@ function CBDWeb_download_items() { // because this can be a large file, output e
     foreach ( $rows as $row ) {
         $queryc = $wpdb->prepare ( "SELECT meta_key, meta_value
              FROM $wpdb->usermeta
-             WHERE user_id=%u", $row->ID );
+             WHERE user_id=%s", $row->ID );
         $customs = $wpdb->get_results( $queryc );
         $custom = array();
         foreach ( $customs as $c ) {
