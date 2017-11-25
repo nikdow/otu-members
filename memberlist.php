@@ -45,7 +45,6 @@ function otu_itemlist (  ) {
      */
     $query = "SELECT id, name FROM $wpdb->pmpro_membership_levels";
     $membertypes = $wpdb->get_results ( $query, OBJECT );
-error_log(  "got membertypes" );
     
     $simplemembertypes = array('0');
     $membertypearr = array();
@@ -320,6 +319,7 @@ function get_items ( $query, $rows_per_page ) {
     $items = array();
     foreach ( $rows as $row ) {
         error_log( print_r($row) );
+        error_log( 'ID: ' . $row->ID );
         // get meta values directly, WP can be inefficient
         $queryc = $wpdb->prepare ( "SELECT meta_key, meta_value
              FROM $wpdb->usermeta
