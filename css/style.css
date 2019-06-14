@@ -52,7 +52,7 @@ i.fa-times {
 }
 #letters, #membertypes, #states, #clsses {
     margin: 0 auto 5px auto;
-    width: 90%px;
+    width: 90%;
 }
 .letter, .membertype, .state, .clss, #download, .search {
     display: inline-block;
