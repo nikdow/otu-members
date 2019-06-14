@@ -55,7 +55,7 @@ i.fa-times {
     width: 920px;
 }
 .letter, .membertype, .state, .clss, #download, .search {
-    display: inline-block;
+    float: left;
     border: grey 1px solid;
     width: auto;
     text-align: center;
