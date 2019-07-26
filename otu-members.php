@@ -501,7 +501,8 @@ function otu_signup( $atts ){
                 ?>
                  You are an honorary member, no subscription is payable.
              <?php } else { ?>
-                 <a href="<?=$url?>">Renew your membership now</a>.
+                 Your membership has expired,<br/>
+                 <a href="<?=$url?>">Click here to renew your membership now</a>.
              <?php }
          } else { ?>
              <a href="<?=get_option('otu-members-login');?>">Please login in order to join or renew your membership of the Officer Training Unit Association</a>.
