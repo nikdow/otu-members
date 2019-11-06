@@ -290,7 +290,7 @@ function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='
         ( $paged ? " wppa.id as album," : "" ) .
         " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
-        " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='pmpro_blastname'" .
+        " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='last_name'" .
         ( $clss == '' ? "" : " LEFT JOIN $wpdb->usermeta c ON c.user_id=u.ID AND c.meta_key='pmpro_class'" ) .
         ( Count($states) == 0 ? "" : " LEFT JOIN $wpdb->usermeta s ON s.user_id=u.ID AND s.meta_key='pmpro_bstate'" ) .
         " LEFT JOIN $wpdb->pmpro_memberships_users p ON p.user_id=u.ID AND p.status='active'" .
