@@ -571,4 +571,3 @@ function my_plugin_options() {
 	</div>
         <?php
 }
-?>
