@@ -260,7 +260,7 @@ function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='
     if( $clss != '' ) {
         preg_match('/^([\d]+)\/([\d]+)([a-zA-z]+)?$/', $clss, $matches );
         $params[] = intval ( $matches[1] );
-        $params[] = intval ( $matches[2] ) . ( $matches[3] ? $matches[3] : "" );
+        $params[] = intval ( $matches[2] ) . ( array_key_exists( 3, $matches ) ? $matches[3] : "" );
     }
     $membertypearr = array();
     foreach ( $membertypes as $membertype ) {
