@@ -82,7 +82,7 @@ function otu_itemlist (  ) {
         if( $match ) {
             $term = intval( $matches[1] );
             $year = intval( $matches[2] );
-            $suffix = $matches[3] ? $matches[3] : "";
+            $suffix = ( array_key_exists(3, $matches ) && $matches[3] ) ? $matches[3] : "";
             $arr = array('term'=>$term, 'year'=>$year, 'suffix'=>$suffix );
             if( array_search ( $arr, $classes ) === false ) {
                 $classes[] = $arr;
