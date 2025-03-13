@@ -288,6 +288,7 @@ function get_query( $first_item, $rows_per_page, $membertypes=array(), $letter='
         "SELECT" . ( $paged ? " SQL_CALC_FOUND_ROWS" : "" ) .
         " IF(p.membership_id IS NULL, 0, p.membership_id) as ml," .
         ( $paged ? " wppa.id as album," : "" ) .
+        ( $paged ? " wppa.crypt as crypt," : "" ) .
         " u.user_email as email, u.display_name as name, u.ID FROM " . $wpdb->users . " u" .
         " LEFT JOIN $wpdb->usermeta m ON m.user_id=u.ID AND m.meta_key='" . $wpdb->base_prefix . "user_level' " .
         " LEFT JOIN $wpdb->usermeta l ON l.user_id=u.ID AND l.meta_key='last_name'" .
@@ -352,7 +353,8 @@ function get_items ( $query, $rows_per_page ) {
             'awards'=>isset ( $custom['awards'] )  ? $custom['awards'] : "",
             'partner'=>isset ( $custom['partner'] ) ? $custom['partner'] : "",
             'album'=> $row->album,
-        ); 
+            'crypt' => $row->crypt,
+        );
         $items[] = $item;
     }
     $data = array ( 'items'=>$items, 'query'=>$query );

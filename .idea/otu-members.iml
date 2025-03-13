@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="WEB_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$/../../../..">
+      <sourceFolder url="file://$MODULE_DIR$/../../../../plugins/woocommerce/packages/action-scheduler/classes" isTestSource="false" packagePrefix="Action_Scheduler" />
+      <sourceFolder url="file://$MODULE_DIR$/../paid-memberships-pro/includes/lib/Braintree/lib" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../paid-memberships-pro/includes/lib/Stripe/lib" isTestSource="false" packagePrefix="Stripe" />
+      <sourceFolder url="file://$MODULE_DIR$/../woocommerce/packages/action-scheduler/classes" isTestSource="false" packagePrefix="Action_Scheduler" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../spelfabet.wordpress/plugins/woocommerce/packages/action-scheduler/classes" isTestSource="false" packagePrefix="Action_Scheduler" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../../wp-includes" isTestSource="false" packagePrefix="PHPMailer" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../../wp-includes/SimplePie/src" isTestSource="false" packagePrefix="SimplePie" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../../wp-includes/wp-includes" isTestSource="false" packagePrefix="PHPMailer" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../../wp-includes/wp-includes/SimplePie/src" isTestSource="false" packagePrefix="SimplePie" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

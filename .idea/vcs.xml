@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="VcsDirectoryMappings">
-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../../configs" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../../plugins/otu-members" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../../plugins/otu-newsletter" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../bikefun.wordpress/plugins/bikefun-event-calendar" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../bikefun.wordpress/plugins/bikefun-events" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../bikefun.wordpress/themes/twentythirteen-child" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../bikemelbourne.wordpress/themes/suffusion-mbug" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../getfile" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../otu-newsletter" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../themes/communitycenter" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../themes/otu-theme" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../spelfabet.wordpress/plugins/lga-finder" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../spelfabet.wordpress/plugins/sendfile" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../spelfabet.wordpress/plugins/spelfabet-copyright" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../spelfabet.wordpress/plugins/spelfabet-decody" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../spelfabet.wordpress/themes/spelfabet-2024" vcs="Git" />
   </component>
 </project>

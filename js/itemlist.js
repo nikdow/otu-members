@@ -78,7 +78,7 @@ itemsApp.controller('itemsCtrl', ['$scope', '$timeout', 'ngDialog',
                 }
 /*                var ajaxurl = $scope.data.siteurl + "/wp-content/plugins/wp-photo-album-plus/wppa-ajax-front.php?" +
                     "action=wppa&wppa-action=render&wppa-cover=0&wppa-album=" + $scope.item.album + "&wppa-occur=1&wppa-size=640"; */
-                var ajaxurl = $scope.data.ajaxurl + "?action=wppa&wppa-action=render&wppa-cover=0&wppa-album=" + $scope.item.album + "&wppa-occur=1&wppa-size=640";
+                var ajaxurl = $scope.data.ajaxurl + "?action=wppa&wppa-action=render&wppa-cover=0&wppa-album=" + $scope.item.crypt + "&wppa-occur=1&wppa-size=640";
                 wppaDoAjaxRender( 1, ajaxurl, '' )
             })
             ngDialog.open( {
